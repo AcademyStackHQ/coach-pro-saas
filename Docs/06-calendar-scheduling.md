@@ -1,0 +1,198 @@
+# Module 6 — Calendar & Scheduling
+
+**Status:** `🔲 Pending`
+**Priority:** 6 of 8
+**Back to index:** [Docs/README.md](./README.md)
+
+---
+
+## What This Module Delivers
+
+- Day / Week / Month calendar views for admin and coach
+- Batch occurrence generation (computed on-the-fly — not stored)
+- 1-to-1 session booking with conflict detection
+- Session status management (completed, cancelled, no-show)
+- Coach-colour-coded calendar lanes
+
+---
+
+## Database Table
+
+### `sessions` (1-to-1 only)
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `UUID PK` | |
+| `tenant_id` | `UUID FK → tenants` | RLS key |
+| `coach_id` | `UUID FK → coaches` | |
+| `student_id` | `UUID FK → students` | |
+| `date` | `DATE NOT NULL` | |
+| `start_time` | `TIME NOT NULL` | |
+| `end_time` | `TIME NOT NULL` | |
+| `venue` | `TEXT` | |
+| `fee_override` | `INT` | in paise; NULL = use batch/default rate |
+| `status` | `TEXT DEFAULT 'scheduled'` | `scheduled` \| `completed` \| `cancelled` \| `no_show` |
+| `notes` | `TEXT` | coach notes after session |
+| `created_at` | `TIMESTAMPTZ DEFAULT now()` | |
+
+Apply RLS. Index: `(tenant_id, coach_id, date)`.
+
+---
+
+## Calendar API
+
+### `GET /api/calendar?from=YYYY-MM-DD&to=YYYY-MM-DD`
+
+Server computes and merges two event types:
+
+**1. Batch occurrences (computed on-the-fly):**
+For each active batch, iterate `days_of_week` × date range:
+- Generate occurrence dates where `date >= effective_from` and `date` falls on a matching day
+- Return as virtual events (no DB row)
+
+**2. 1-to-1 sessions (from DB):**
+Query `sessions` table for the date range.
+
+**Response shape:**
+```json
+{
+  "batch_occurrences": [
+    {
+      "type": "batch",
+      "batch_id": "...",
+      "batch_name": "U-12 Cricket",
+      "date": "2025-07-07",
+      "start_time": "07:00",
+      "end_time": "09:00",
+      "venue": "Ground A",
+      "coach_id": "...",
+      "coach_name": "Ravi Kumar",
+      "coach_color": "#3b82f6",
+      "enrolled_count": 12,
+      "capacity": 15
+    }
+  ],
+  "sessions": [
+    {
+      "type": "session",
+      "id": "...",
+      "student_name": "Arjun S",
+      "coach_name": "Ravi Kumar",
+      "coach_color": "#3b82f6",
+      "date": "2025-07-07",
+      "start_time": "11:00",
+      "end_time": "12:00",
+      "status": "scheduled"
+    }
+  ]
+}
+```
+
+---
+
+## Calendar UI
+
+Install and configure one of:
+- `react-big-calendar` (lighter, more customisable)
+- `FullCalendar` (feature-rich, has resource view for coach lanes)
+
+### View Modes
+
+| View | Default for | What it shows |
+|---|---|---|
+| Month | Admin | Dot indicators per day; click day to expand events list |
+| Week | Coach | Colour-coded coach lanes; hour-slot grid |
+| Day | Admin | 30-min slot grid; drag handles for rescheduling |
+
+### Event Colours
+- Batch occurrences use `coaches.color` (set in Module 3)
+- Sessions use same coach colour, different opacity or border style
+- Cancelled sessions shown with strikethrough / grey
+
+### Role Differences
+- Admin: sees ALL coaches' events; can create/edit any session
+- Coach: sees ONLY own sessions and own batch occurrences; can mark status only
+
+---
+
+## 1-to-1 Session Booking
+
+### `/api/sessions` routes
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/api/sessions` | Book session with conflict check |
+| `PATCH` | `/api/sessions/[id]` | Update time/venue/notes |
+| `PATCH` | `/api/sessions/[id]/status` | Mark completed / cancelled / no-show |
+| `DELETE` | `/api/sessions/[id]` | Hard cancel (sets status = cancelled) |
+
+### Conflict Check on Booking
+
+Before insert, run both checks:
+
+**Coach conflict:**
+```sql
+-- Check sessions table
+SELECT id FROM sessions
+WHERE coach_id = $coachId AND date = $date AND status != 'cancelled'
+  AND NOT (end_time <= $startTime OR start_time >= $endTime)
+
+-- ALSO check batch occurrences for that date
+-- (computed in app logic — check days_of_week for this date, time overlap)
+```
+
+**Student conflict:**
+```sql
+SELECT id FROM sessions
+WHERE student_id = $studentId AND date = $date AND status != 'cancelled'
+  AND NOT (end_time <= $startTime OR start_time >= $endTime)
+```
+
+If any conflict found → return 409 with clash details.
+
+### Booking Modal (Admin)
+
+Fields:
+- Coach (dropdown — active coaches)
+- Student (searchable dropdown — active students)
+- Date (date picker, respects `working_hours`)
+- Start time / End time
+- Venue
+- Fee override (optional — INR input stored in paise)
+
+### Status Transitions
+
+| From | To | Who |
+|---|---|---|
+| Scheduled | Completed | Coach or Admin |
+| Scheduled | No-show | Coach or Admin |
+| Scheduled | Cancelled | Admin only |
+| Completed / No-show | — | Final (no further transitions) |
+
+---
+
+## Completion Checklist
+
+- [ ] `sessions` table created with RLS
+- [ ] `GET /api/calendar` returns merged batch occurrences + sessions
+- [ ] Batch occurrences computed correctly from `days_of_week` + `effective_from`
+- [ ] Calendar renders in Month / Week / Day views
+- [ ] Coach colour lanes work in Week view
+- [ ] Admin sees all coaches' events; coach sees only own
+- [ ] 1-to-1 booking modal opens from calendar (click empty slot)
+- [ ] Coach conflict check blocks double-booking
+- [ ] Student conflict check blocks double-booking
+- [ ] Conflicts show descriptive error (which batch/session clashes)
+- [ ] Status transitions work (completed, no-show, cancelled)
+- [ ] Coach can add notes on session completion
+- [ ] Cancelled sessions shown visually distinct on calendar
+
+---
+
+## Depends On
+
+[Module 5 — Batch Management](./05-batch-management.md)
+
+## Unlocks
+
+[Module 7 — Fee Management](./07-fee-management.md)
