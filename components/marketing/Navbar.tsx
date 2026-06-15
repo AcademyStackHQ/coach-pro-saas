@@ -28,7 +28,7 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center text-lg font-bold tracking-tight">
-          <span className="text-blue-600">Coach</span>Pro
+          <span className="text-primary">Coach</span>Pro
         </Link>
 
         {/* Desktop nav */}
@@ -59,9 +59,15 @@ export function Navbar() {
           </Link>
           <Link
             href="/signup"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Join your academy
+          </Link>
+          <Link
+            href="/register"
             className={cn(
               buttonVariants({ size: "sm" }),
-              "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+              "bg-primary hover:bg-primary/90 text-primary-foreground border-transparent"
             )}
           >
             Start free →
@@ -83,7 +89,7 @@ export function Navbar() {
                   onClick={() => setOpen(false)}
                   className="text-lg font-bold tracking-tight"
                 >
-                  <span className="text-blue-600">Coach</span>Pro
+                  <span className="text-primary">Coach</span>Pro
                 </Link>
               </div>
 
@@ -109,6 +115,13 @@ export function Navbar() {
               {/* CTAs */}
               <div className="mt-auto flex flex-col gap-2 border-t p-4">
                 <Link
+                  href="/signup"
+                  onClick={() => setOpen(false)}
+                  className={cn(buttonVariants({ variant: "outline" }), "w-full justify-center")}
+                >
+                  Join your academy
+                </Link>
+                <Link
                   href="/login"
                   onClick={() => setOpen(false)}
                   className={cn(buttonVariants({ variant: "outline" }), "w-full justify-center")}
@@ -116,11 +129,11 @@ export function Navbar() {
                   Sign in
                 </Link>
                 <Link
-                  href="/signup"
+                  href="/register"
                   onClick={() => setOpen(false)}
                   className={cn(
                     buttonVariants(),
-                    "w-full justify-center bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                    "w-full justify-center bg-primary hover:bg-primary/90 text-primary-foreground border-transparent"
                   )}
                 >
                   Start free →

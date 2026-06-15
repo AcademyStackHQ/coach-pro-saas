@@ -1,8 +1,8 @@
-# Module 6 — Calendar & Scheduling
+﻿# Module 6 — Calendar & Scheduling
 
 **Status:** `🔲 Pending`
 **Priority:** 6 of 8
-**Back to index:** [Docs/README.md](./README.md)
+**Back to index:** [docs/README.md](../README.md)
 
 ---
 

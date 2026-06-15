@@ -20,15 +20,15 @@ Navigate to any module below for implementation details, API contracts, and stat
 
 | # | Module | Status | Doc |
 |---|---|---|---|
-| 0 | Marketing Site | `🔲 Pending` | [→ details](./00-marketing-site.md) |
-| 1 | Foundation & Auth | `📋 In Review` | [→ details](./01-foundation-and-auth.md) |
-| 2 | Tenant & Academy Setup | `🔲 Pending` | [→ details](./02-tenant-academy-setup.md) |
-| 3 | Coach Management | `🔲 Pending` | [→ details](./03-coach-management.md) |
-| 4 | Student Management | `🔲 Pending` | [→ details](./04-student-management.md) |
-| 5 | Batch Management | `🔲 Pending` | [→ details](./05-batch-management.md) |
-| 6 | Calendar & Scheduling | `🔲 Pending` | [→ details](./06-calendar-scheduling.md) |
-| 7 | Fee Management | `🔲 Pending` | [→ details](./07-fee-management.md) |
-| 8 | SMS Notifications | `🔲 Pending` | [→ details](./08-sms-notifications.md) |
+| 0 | Marketing Site | `🔲 Pending` | [→ details](./guides/00-marketing-site.md) |
+| 1 | Foundation & Auth | `🚧 In Progress` | [→ details](./guides/01-foundation-and-auth.md) |
+| 2 | Academy Onboarding & Settings | `🔲 Pending` | [→ details](./guides/02-tenant-academy-setup.md) |
+| 3 | Coach Management | `🔲 Pending` | [→ details](./guides/03-coach-management.md) |
+| 4 | Student Management | `🔲 Pending` | [→ details](./guides/04-student-management.md) |
+| 5 | Batch Management | `🔲 Pending` | [→ details](./guides/05-batch-management.md) |
+| 6 | Calendar & Scheduling | `🔲 Pending` | [→ details](./guides/06-calendar-scheduling.md) |
+| 7 | Fee Management | `🔲 Pending` | [→ details](./guides/07-fee-management.md) |
+| 8 | SMS Notifications | `🔲 Pending` | [→ details](./guides/08-sms-notifications.md) |
 
 > Module 0 (Marketing Site) is independent and can be built in parallel with Module 1.
 > Modules 1–8 must be completed in sequence — each depends on the one before it.
@@ -73,8 +73,12 @@ lib/
   supabase/server.ts  client.ts  types.ts
   sms/index.ts
   pdf/index.ts
-middleware.ts
+proxy.ts
 supabase/migrations/
-supabase/seed.sql
-Docs/                    ← you are here
+docs/
+  README.md              ← you are here
+  guides/                ← numbered module dev guides
+  prd/                   ← product requirements documents
+  hld/                   ← high level design documents
+  design/                ← branding and pitch deck
 ```

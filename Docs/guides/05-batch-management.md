@@ -1,8 +1,8 @@
-# Module 5 — Batch Management
+﻿# Module 5 — Batch Management
 
 **Status:** `🔲 Pending`
 **Priority:** 5 of 8
-**Back to index:** [Docs/README.md](./README.md)
+**Back to index:** [docs/README.md](../README.md)
 
 ---
 

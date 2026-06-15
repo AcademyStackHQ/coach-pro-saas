@@ -120,13 +120,13 @@ export function Pricing() {
               className={cn(
                 "relative flex flex-col",
                 plan.highlighted
-                  ? "border-blue-600 shadow-xl ring-2 ring-blue-600 bg-background"
+                  ? "border-primary shadow-xl ring-2 ring-primary bg-background"
                   : "border-0 shadow-sm bg-background"
               )}
             >
               {plan.badge && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-blue-600 text-white px-3 py-0.5 text-xs">
+                  <Badge className="bg-primary text-primary-foreground px-3 py-0.5 text-xs">
                     {plan.badge}
                   </Badge>
                 </div>
@@ -171,7 +171,7 @@ export function Pricing() {
                       buttonVariants({ size: "default" }),
                       "w-full justify-center",
                       plan.highlighted
-                        ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                        ? "bg-primary hover:bg-primary/90 text-primary-foreground border-transparent"
                         : "bg-foreground text-background hover:bg-foreground/90"
                     )}
                   >
