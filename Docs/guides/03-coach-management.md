@@ -1,8 +1,8 @@
-# Module 3 — Coach Management
+﻿# Module 3 — Coach Management
 
 **Status:** `🔲 Pending`
 **Priority:** 3 of 8
-**Back to index:** [Docs/README.md](./README.md)
+**Back to index:** [docs/README.md](../README.md)
 
 ---
 

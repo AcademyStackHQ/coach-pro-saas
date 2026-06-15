@@ -1,8 +1,8 @@
-# Module 4 — Student Management
+﻿# Module 4 — Student Management
 
 **Status:** `🔲 Pending`
 **Priority:** 4 of 8
-**Back to index:** [Docs/README.md](./README.md)
+**Back to index:** [docs/README.md](../README.md)
 
 ---
 

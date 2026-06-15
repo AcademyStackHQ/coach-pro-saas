@@ -41,7 +41,7 @@ export function HowItWorks() {
           {steps.map((step) => (
             <div key={step.number} className="relative flex flex-col items-center text-center">
               {/* Number circle */}
-              <div className="relative mb-5 flex h-16 w-16 items-center justify-center rounded-full border-2 border-blue-200 bg-blue-50 text-xl font-bold text-blue-600">
+              <div className="relative mb-5 flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary/25 bg-primary/8 text-xl font-bold text-primary">
                 {step.number}
               </div>
               <h3 className="mb-2 text-base font-semibold text-foreground">

@@ -1,8 +1,8 @@
-# Module 7 — Fee Management
+﻿# Module 7 — Fee Management
 
 **Status:** `🔲 Pending`
 **Priority:** 7 of 8
-**Back to index:** [Docs/README.md](./README.md)
+**Back to index:** [docs/README.md](../README.md)
 
 ---
 

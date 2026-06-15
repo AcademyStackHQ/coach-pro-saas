@@ -1,8 +1,8 @@
-# Module 0 — Marketing Site
+﻿# Module 0 — Marketing Site
 
 **Status:** `🔲 Pending`
 **Priority:** 0 — can be built in parallel with Module 1; does not block app modules
-**Back to index:** [Docs/README.md](./README.md)
+**Back to index:** [docs/README.md](../README.md)
 
 ---
 
@@ -93,7 +93,7 @@ The `(marketing)` group uses a different layout from the app — no sidebar, no 
 
 | Icon | Title | Description |
 |---|---|---|
-| 👥 | Student Management | Enrol students, manage profiles, track jersey details and guardian contacts in one place. |
+| 👥 | Student Management | Pre-approve student emails, let them self-sign-up, and manage profiles, jersey details, and guardian contacts in one place. |
 | 📅 | Smart Scheduling | Batch calendars and 1-to-1 sessions with automatic conflict detection for coaches and venues. |
 | 💳 | Fee Collection | Auto-generate monthly invoices, record payments, and send PDF receipts instantly. |
 | 📱 | SMS & WhatsApp | Automated fee reminders and payment confirmations sent directly to parents. |
@@ -112,7 +112,8 @@ The `(marketing)` group uses a different layout from the app — no sidebar, no 
 
 1. **Create your academy** — Sign up free, add your academy name and first sport. No credit card needed.
 2. **Add coaches and batches** — Invite coaches by email, set your batch schedules and monthly fees.
-3. **Enrol students and collect fees** — Add students, auto-generate monthly invoices, and track payments.
+3. **Pre-approve your students** — Add student emails from your dashboard. Students self-sign-up and are instantly linked to your academy — no manual linking needed.
+4. **Collect fees automatically** — Auto-generate monthly invoices, record payments, and send PDF receipts.
 
 **Component:** `components/marketing/HowItWorks.tsx`
 
@@ -241,7 +242,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 ```ts
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: '*', allow: '/', disallow: ['/dashboard', '/coach', '/api/'] },
+    rules: { userAgent: '*', allow: '/', disallow: ['/dashboard', '/coach', '/student', '/admin', '/no-access', '/api/'] },
     sitemap: 'https://coachpro.app/sitemap.xml',
   }
 }
@@ -304,7 +305,7 @@ Skip auth check for `app/(marketing)/**` — these are public pages.
 - [ ] Hero: H1, subtext, CTAs, trust row, dashboard mockup image
 - [ ] New badge pill is visible and links to relevant feature
 - [ ] Features: 6 cards in 2×3 grid (responsive)
-- [ ] How it works: 3-step flow
+- [ ] How it works: 4-step flow
 - [ ] Pricing: 3-tier cards with feature comparison
 - [ ] Stories: 3 testimonial cards
 - [ ] Footer: 4-column with all links

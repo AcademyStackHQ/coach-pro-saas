@@ -64,7 +64,7 @@ export function Features() {
           {features.map((feature) => (
             <Card key={feature.title} className="border-0 shadow-sm bg-background">
               <CardHeader>
-                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-xl">
+                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/8 text-xl">
                   {feature.icon}
                 </div>
                 <CardTitle className="text-base font-semibold">{feature.title}</CardTitle>

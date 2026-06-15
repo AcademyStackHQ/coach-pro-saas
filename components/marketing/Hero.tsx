@@ -12,7 +12,7 @@ function DashboardMockup() {
   ]
 
   const stats = [
-    { value: "248", label: "Active students", color: "text-blue-600" },
+    { value: "248", label: "Active students", color: "text-primary" },
     { value: "₹4.28L", label: "Collected · June", color: "text-green-600" },
     { value: "92%", label: "Attendance", color: "text-purple-600" },
   ]
@@ -44,7 +44,7 @@ function DashboardMockup() {
         {/* Sidebar */}
         <div className="hidden sm:flex w-44 shrink-0 flex-col border-r bg-muted/20 p-3 gap-1">
           <div className="mb-2 px-2 py-1">
-            <span className="text-xs font-bold text-blue-600">CoachPro</span>
+            <span className="text-xs font-bold text-primary">CoachPro</span>
           </div>
           {sidebarItems.map((item) => (
             <div
@@ -52,7 +52,7 @@ function DashboardMockup() {
               className={cn(
                 "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium",
                 item.active
-                  ? "bg-blue-600 text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted"
               )}
             >
@@ -112,8 +112,8 @@ export function Hero() {
     <section className="relative overflow-hidden bg-background py-20 sm:py-28 lg:py-32">
       {/* Background decoration */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-40 -right-32 h-150 w-150 rounded-full bg-blue-50 opacity-60 blur-3xl" />
-        <div className="absolute -bottom-40 -left-32 h-100 w-100 rounded-full bg-blue-50 opacity-40 blur-3xl" />
+        <div className="absolute -top-40 -right-32 h-150 w-150 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-40 -left-32 h-100 w-100 rounded-full bg-primary/6 blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -123,16 +123,16 @@ export function Hero() {
             {/* Badge pill */}
             <Badge
               variant="outline"
-              className="rounded-full border-blue-200 bg-blue-50 text-blue-700 px-3 py-1 text-xs font-medium"
+              className="rounded-full border-primary/25 bg-primary/8 text-primary px-3 py-1 text-xs font-medium"
             >
-              <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-blue-500" />
+              <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-primary" />
               New · WhatsApp reminders
             </Badge>
 
             {/* H1 */}
             <h1 className="text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Run your coaching academy from{" "}
-              <span className="text-blue-600">one place</span>
+              <span className="text-primary">one place</span>
             </h1>
 
             {/* Subtext */}
@@ -145,10 +145,10 @@ export function Hero() {
             {/* CTAs */}
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/signup"
+                href="/register"
                 className={cn(
                   buttonVariants({ size: "lg" }),
-                  "bg-blue-600 hover:bg-blue-700 text-white border-transparent px-8"
+                  "bg-primary hover:bg-primary/90 text-primary-foreground border-transparent px-8"
                 )}
               >
                 Start free →

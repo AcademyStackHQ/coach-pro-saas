@@ -1,8 +1,8 @@
-# Module 8 — SMS Notifications
+﻿# Module 8 — SMS Notifications
 
 **Status:** `🔲 Pending`
 **Priority:** 8 of 8 — final MVP module
-**Back to index:** [Docs/README.md](./README.md)
+**Back to index:** [docs/README.md](../README.md)
 
 ---
 

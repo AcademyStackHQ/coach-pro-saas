@@ -38,7 +38,7 @@ export function Footer() {
           {/* Brand column */}
           <div className="col-span-2 sm:col-span-1">
             <Link href="/" className="inline-flex text-lg font-bold tracking-tight">
-              <span className="text-blue-400">Coach</span>Pro
+              <span className="text-brand-light">Coach</span>Pro
             </Link>
             <p className="mt-3 text-sm leading-relaxed text-background/60">
               The cloud platform that helps sports academies manage students,
