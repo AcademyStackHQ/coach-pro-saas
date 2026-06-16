@@ -178,6 +178,7 @@ export type Database = {
       get_my_institution_ids: { Args: never; Returns: string[] }
       is_admin_of: { Args: { p_institution_id: string }; Returns: boolean }
       is_email_allowed: { Args: { p_email: string }; Returns: boolean }
+      is_institution_name_available: { Args: { p_name: string }; Returns: boolean }
       link_user_to_institution: {
         Args: {
           p_added_by: string

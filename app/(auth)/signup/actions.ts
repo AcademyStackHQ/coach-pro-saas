@@ -1,5 +1,6 @@
 "use server"
 
+import { headers } from "next/headers"
 import { createClient } from "@/lib/server"
 import { z } from "zod"
 
@@ -55,10 +56,13 @@ export async function signUpStudent(
     }
   }
 
+  const origin = (await headers()).get("origin")
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      emailRedirectTo: `${origin}/auth/callback?next=/login`,
       data: {
         signup_type: "student",
         full_name,
