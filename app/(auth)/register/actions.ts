@@ -1,5 +1,6 @@
 "use server"
 
+import { headers } from "next/headers"
 import { createClient } from "@/lib/server"
 import { z } from "zod"
 
@@ -56,11 +57,13 @@ export async function registerInstitution(
   const slug = toSlug(institution_name)
 
   const supabase = await createClient()
+  const origin = (await headers()).get("origin")
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      emailRedirectTo: `${origin}/auth/callback?next=/login`,
       data: {
         signup_type: "institution_admin",
         institution_name,
@@ -88,10 +91,12 @@ export async function registerInstitution(
 export async function checkInstitutionName(name: string): Promise<boolean> {
   if (name.trim().length < 2) return false
   const supabase = await createClient()
-  const { data } = await supabase
-    .from("institutions")
-    .select("id")
-    .ilike("name", name.trim())
-    .maybeSingle()
-  return data === null
+  // RLS hides the institutions table from unauthenticated callers, so a direct
+  // SELECT here would always return zero rows and report every name as available.
+  // This SECURITY DEFINER RPC bypasses RLS and returns only a boolean.
+  const { data, error } = await supabase.rpc("is_institution_name_available", {
+    p_name: name,
+  })
+  if (error) return false
+  return data === true
 }
