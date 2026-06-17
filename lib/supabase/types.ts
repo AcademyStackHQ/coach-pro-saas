@@ -156,6 +156,7 @@ export type Database = {
         Row: {
           address: string | null
           category: string | null
+          code: string | null
           contact_email: string | null
           contact_mobile: string | null
           created_at: string | null
@@ -168,12 +169,14 @@ export type Database = {
           slug: string
           sms_credits: number | null
           sports: string[] | null
+          student_seq: number
           timezone: string | null
           working_hours: Json | null
         }
         Insert: {
           address?: string | null
           category?: string | null
+          code?: string | null
           contact_email?: string | null
           contact_mobile?: string | null
           created_at?: string | null
@@ -186,12 +189,14 @@ export type Database = {
           slug: string
           sms_credits?: number | null
           sports?: string[] | null
+          student_seq?: number
           timezone?: string | null
           working_hours?: Json | null
         }
         Update: {
           address?: string | null
           category?: string | null
+          code?: string | null
           contact_email?: string | null
           contact_mobile?: string | null
           created_at?: string | null
@@ -204,6 +209,7 @@ export type Database = {
           slug?: string
           sms_credits?: number | null
           sports?: string[] | null
+          student_seq?: number
           timezone?: string | null
           working_hours?: Json | null
         }
@@ -245,16 +251,16 @@ export type Database = {
           enrolment_date: string | null
           full_name: string
           gender: string | null
-          guardian_email: string | null
-          guardian_mobile: string
-          guardian_name: string
-          guardian_user_id: string | null
           id: string
           institution_id: string
           jersey_name: string | null
           jersey_number: number | null
           jersey_size: string | null
           monthly_fee: number | null
+          parent_email: string | null
+          parent_mobile: string
+          parent_name: string
+          parent_user_id: string | null
           photo_url: string | null
           sms_opt_in: boolean | null
           sports: string[] | null
@@ -270,16 +276,16 @@ export type Database = {
           enrolment_date?: string | null
           full_name: string
           gender?: string | null
-          guardian_email?: string | null
-          guardian_mobile: string
-          guardian_name: string
-          guardian_user_id?: string | null
           id?: string
           institution_id: string
           jersey_name?: string | null
           jersey_number?: number | null
           jersey_size?: string | null
           monthly_fee?: number | null
+          parent_email?: string | null
+          parent_mobile: string
+          parent_name: string
+          parent_user_id?: string | null
           photo_url?: string | null
           sms_opt_in?: boolean | null
           sports?: string[] | null
@@ -295,16 +301,16 @@ export type Database = {
           enrolment_date?: string | null
           full_name?: string
           gender?: string | null
-          guardian_email?: string | null
-          guardian_mobile?: string
-          guardian_name?: string
-          guardian_user_id?: string | null
           id?: string
           institution_id?: string
           jersey_name?: string | null
           jersey_number?: number | null
           jersey_size?: string | null
           monthly_fee?: number | null
+          parent_email?: string | null
+          parent_mobile?: string
+          parent_name?: string
+          parent_user_id?: string | null
           photo_url?: string | null
           sms_opt_in?: boolean | null
           sports?: string[] | null
@@ -314,17 +320,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "students_guardian_user_id_fkey"
-            columns: ["guardian_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "students_institution_id_fkey"
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_parent_user_id_fkey"
+            columns: ["parent_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -341,6 +347,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_institution_code: { Args: { p_name: string }; Returns: string }
       get_my_institution_ids: { Args: never; Returns: string[] }
       is_admin_of: { Args: { p_institution_id: string }; Returns: boolean }
       is_coach_of: { Args: { p_institution_id: string }; Returns: boolean }
@@ -358,6 +365,7 @@ export type Database = {
         }
         Returns: Json
       }
+      next_student_code: { Args: { p_institution_id: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

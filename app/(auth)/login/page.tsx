@@ -54,7 +54,8 @@ export default function LoginPage() {
                 name="institution_id"
                 value={inst.institution_id}
               />
-              <input type="hidden" name="role" value={inst.role} />
+              {/* role is derived server-side from the membership, never trusted
+                  from the form — see selectInstitution. */}
               <button
                 type="submit"
                 className="flex w-full items-center gap-3 rounded-lg border p-3.5 text-left transition-colors hover:bg-muted"
@@ -95,14 +96,14 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email or student code</Label>
             <Input
               id="email"
               name="email"
-              type="email"
-              placeholder="you@academy.com"
+              type="text"
+              placeholder="you@academy.com or MVA0001"
               required
-              autoComplete="email"
+              autoComplete="username"
             />
           </div>
 

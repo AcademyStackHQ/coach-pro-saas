@@ -1,7 +1,17 @@
 -- ============================================================
--- Migration 001 — Foundation & Auth
--- Tables: institutions, profiles, institution_members,
---         institution_allowed_emails
+-- 001 — Foundation: Auth, Institutions & Membership
+--
+-- Consolidated schema (dev phase — drop & recreate). This is the
+-- FINAL state of every object below; there are no later
+-- CREATE OR REPLACE chains to replay.
+--
+-- Tables : institutions, profiles, institution_members,
+--          institution_allowed_emails
+-- Helpers: get_my_institution_ids, is_admin_of,
+--          generate_institution_code, next_student_code
+-- RPCs   : is_email_allowed, is_institution_name_available,
+--          link_user_to_institution
+-- Trigger: handle_new_user (on auth.users)
 -- ============================================================
 
 
@@ -13,13 +23,20 @@ CREATE TABLE public.institutions (
   id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name                TEXT        NOT NULL,
   slug                TEXT        NOT NULL,
+  code                TEXT,                       -- short human prefix for student codes (e.g. "MVA")
+  student_seq         INT         NOT NULL DEFAULT 0,  -- atomic per-institution student counter
   logo_url            TEXT,
+  category            TEXT,
+  address             TEXT,
+  contact_email       TEXT,
+  contact_mobile      TEXT,
   sports              TEXT[]      DEFAULT '{}',
   timezone            TEXT        DEFAULT 'Asia/Kolkata',
   plan                TEXT        DEFAULT 'free'
                                   CHECK (plan IN ('free', 'pro', 'enterprise')),
   sms_credits         INT         DEFAULT 0,
   working_hours       JSONB       DEFAULT '{}',
+  fee_config          JSONB       DEFAULT '{}',
   onboarding_complete BOOLEAN     DEFAULT false,
   created_at          TIMESTAMPTZ DEFAULT now(),
 
@@ -72,6 +89,11 @@ CREATE TABLE public.institution_allowed_emails (
 CREATE INDEX idx_institutions_slug
   ON public.institutions (slug);
 
+-- Institution code is globally unique (it prefixes every student code).
+CREATE UNIQUE INDEX idx_institutions_code_unique
+  ON public.institutions (code)
+  WHERE code IS NOT NULL;
+
 CREATE INDEX idx_profiles_email
   ON public.profiles (email);
 
@@ -94,7 +116,7 @@ CREATE INDEX idx_allowed_emails_pending
 
 
 -- ============================================================
--- 3. HELPER FUNCTION (bypasses RLS — used inside RLS policies
+-- 3. HELPER FUNCTIONS (bypass RLS — used inside RLS policies
 --    to avoid infinite recursion on institution_members)
 -- ============================================================
 
@@ -132,12 +154,144 @@ $$;
 
 
 -- ============================================================
--- 4. ROW LEVEL SECURITY
+-- 4. PUBLIC RPCs (SECURITY DEFINER, called pre-auth)
+--
+-- is_email_allowed / is_institution_name_available run for
+-- unauthenticated visitors at register/signup time, so they must
+-- bypass RLS. Each returns only a boolean — no row data leaks.
 -- ============================================================
 
-ALTER TABLE public.institutions             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.profiles                 ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.institution_members      ENABLE ROW LEVEL SECURITY;
+CREATE OR REPLACE FUNCTION public.is_email_allowed(p_email TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM   public.institution_allowed_emails
+    WHERE  lower(email)  = lower(p_email)
+      AND  status        = 'pending'
+  );
+$$;
+
+-- Case-insensitive + trimmed so it matches the institutions_name_unique
+-- behaviour the user actually hits on signup.
+CREATE OR REPLACE FUNCTION public.is_institution_name_available(p_name TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT NOT EXISTS (
+    SELECT 1
+    FROM   public.institutions
+    WHERE  lower(name) = lower(trim(p_name))
+  );
+$$;
+
+
+-- ============================================================
+-- 5. STUDENT-CODE HELPERS
+--
+-- Each institution gets a short CODE (initials of its name). Every
+-- student gets a globally-unique student_code = CODE || zero-padded
+-- per-institution sequence (e.g. MVA0007), which lets a synthetic
+-- login email be built from the code alone.
+-- ============================================================
+
+-- SECURITY DEFINER so the unauthenticated /register flow can preview
+-- the code before the account exists.
+CREATE OR REPLACE FUNCTION public.generate_institution_code(p_name TEXT)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_words     TEXT[];
+  v_word      TEXT;
+  v_base      TEXT := '';
+  v_candidate TEXT;
+  v_suffix    INT  := 1;
+BEGIN
+  -- Split the uppercased name into alphabetic words (drop digits/punctuation).
+  v_words := regexp_split_to_array(upper(coalesce(p_name, '')), '[^A-Z]+');
+
+  -- Base = initials of each word (e.g. "Mira Volley Academy" -> "MVA").
+  FOREACH v_word IN ARRAY v_words LOOP
+    IF length(v_word) > 0 THEN
+      v_base := v_base || left(v_word, 1);
+    END IF;
+  END LOOP;
+
+  -- Fewer than 3 initials (e.g. a single-word name): pad from its letters.
+  IF length(v_base) < 3 THEN
+    v_base := left(array_to_string(v_words, ''), 3);
+  ELSE
+    v_base := left(v_base, 3);
+  END IF;
+
+  -- No usable letters at all -> deterministic fallback; always 3 chars.
+  IF length(v_base) = 0 THEN
+    v_base := 'ACA';
+  END IF;
+  v_base := rpad(v_base, 3, 'X');
+
+  -- Bare base first, then append an incrementing suffix until unique.
+  v_candidate := v_base;
+  WHILE EXISTS (SELECT 1 FROM public.institutions WHERE code = v_candidate) LOOP
+    v_suffix    := v_suffix + 1;
+    v_candidate := v_base || v_suffix::TEXT;
+  END LOOP;
+
+  RETURN v_candidate;
+END;
+$$;
+
+-- Admin-only. UPDATE ... RETURNING locks the institution row, so
+-- concurrent "Add Student" / imports never collide.
+CREATE OR REPLACE FUNCTION public.next_student_code(p_institution_id UUID)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_code TEXT;
+  v_seq  INT;
+BEGIN
+  IF NOT public.is_admin_of(p_institution_id) THEN
+    RAISE EXCEPTION 'Not authorised';
+  END IF;
+
+  UPDATE public.institutions
+  SET    student_seq = student_seq + 1
+  WHERE  id = p_institution_id
+  RETURNING code, student_seq INTO v_code, v_seq;
+
+  -- Institution has no code yet — assign one now.
+  IF v_code IS NULL THEN
+    v_code := public.generate_institution_code(
+      (SELECT name FROM public.institutions WHERE id = p_institution_id)
+    );
+    UPDATE public.institutions SET code = v_code WHERE id = p_institution_id;
+  END IF;
+
+  RETURN v_code || lpad(v_seq::TEXT, 4, '0');
+END;
+$$;
+
+
+-- ============================================================
+-- 6. ROW LEVEL SECURITY
+-- ============================================================
+
+ALTER TABLE public.institutions               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles                   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.institution_members        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.institution_allowed_emails ENABLE ROW LEVEL SECURITY;
 
 -- institutions
@@ -204,13 +358,18 @@ CREATE POLICY "admins can delete allowed emails"
 
 
 -- ============================================================
--- 5. TRIGGER — handle new user signup
+-- 7. TRIGGER — handle new user signup
 --
--- Fires on every auth.users INSERT.
--- Reads raw_user_meta_data.signup_type to branch behaviour:
+-- Fires on every auth.users INSERT. Branches on
+-- raw_user_meta_data.signup_type:
 --
---   'institution_admin' → create institution + profile + admin member row
---   'student'           → create profile + auto-link via allowed_emails
+--   'institution_admin' → create institution (+ code) + profile
+--                          + admin member row
+--   'student'           → create profile + auto-link via
+--                          allowed_emails (case-insensitive)
+--   'student_code'      → only the profile row is created here;
+--                          membership is inserted by the app via
+--                          the service-role admin client.
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -223,9 +382,12 @@ DECLARE
   v_signup_type      TEXT;
   v_institution_name TEXT;
   v_institution_slug TEXT;
+  v_institution_code TEXT;
   v_category         TEXT;
   v_new_institution  UUID;
   v_allowed          RECORD;
+  v_constraint       TEXT;
+  v_linked           INT;
 BEGIN
   v_signup_type := NEW.raw_user_meta_data->>'signup_type';
 
@@ -243,29 +405,52 @@ BEGIN
     v_institution_name := NEW.raw_user_meta_data->>'institution_name';
     v_institution_slug := NEW.raw_user_meta_data->>'institution_slug';
     v_category         := NEW.raw_user_meta_data->>'category';
+    v_institution_code := NEW.raw_user_meta_data->>'institution_code';
 
-    -- category/contact_* columns are added in migration 003; this body
-    -- only runs at signup time, by which point they exist.
-    INSERT INTO public.institutions (name, slug, category, contact_email, contact_mobile)
-    VALUES (
-      v_institution_name,
-      v_institution_slug,
-      v_category,
-      NEW.email,
-      NEW.raw_user_meta_data->>'mobile'
-    )
-    RETURNING id INTO v_new_institution;
+    -- The app previews a code, but generate one if absent.
+    IF v_institution_code IS NULL OR length(v_institution_code) = 0 THEN
+      v_institution_code := public.generate_institution_code(v_institution_name);
+    END IF;
+
+    BEGIN
+      INSERT INTO public.institutions
+             (name, slug, category, contact_email, contact_mobile, code)
+      VALUES (v_institution_name, v_institution_slug, v_category,
+              NEW.email, NEW.raw_user_meta_data->>'mobile', v_institution_code)
+      RETURNING id INTO v_new_institution;
+    EXCEPTION WHEN unique_violation THEN
+      GET STACKED DIAGNOSTICS v_constraint = CONSTRAINT_NAME;
+      IF v_constraint = 'idx_institutions_code_unique' THEN
+        -- Rare race: the previewed code was taken between preview and insert.
+        -- Regenerate a fresh, unique code and retry once.
+        v_institution_code := public.generate_institution_code(v_institution_name);
+        INSERT INTO public.institutions
+               (name, slug, category, contact_email, contact_mobile, code)
+        VALUES (v_institution_name, v_institution_slug, v_category,
+                NEW.email, NEW.raw_user_meta_data->>'mobile', v_institution_code)
+        RETURNING id INTO v_new_institution;
+      ELSE
+        -- The academy NAME or SLUG is already taken (institutions_name_unique /
+        -- institutions_slug_unique). Regenerating the code wouldn't help, so
+        -- raise a clean, app-recognisable error instead of retrying into the
+        -- same collision. The app re-checks the name pre-signup; this is the
+        -- backstop for the race.
+        RAISE EXCEPTION 'institution_name_taken'
+          USING ERRCODE = 'unique_violation';
+      END IF;
+    END;
 
     INSERT INTO public.institution_members (institution_id, user_id, role)
     VALUES (v_new_institution, NEW.id, 'admin');
 
   ELSIF v_signup_type = 'student' THEN
 
-    -- Link to every institution that pre-approved this email
+    -- Link to every institution that pre-approved this email (case-insensitive)
+    v_linked := 0;
     FOR v_allowed IN
       SELECT id, institution_id, role
       FROM   public.institution_allowed_emails
-      WHERE  email  = NEW.email
+      WHERE  lower(email) = lower(NEW.email)
         AND  status = 'pending'
     LOOP
       INSERT INTO public.institution_members (institution_id, user_id, role)
@@ -275,7 +460,18 @@ BEGIN
       UPDATE public.institution_allowed_emails
       SET    status = 'joined'
       WHERE  id     = v_allowed.id;
+
+      v_linked := v_linked + 1;
     END LOOP;
+
+    -- Invite-only enforcement. The app checks is_email_allowed before signup,
+    -- but the publishable key lets anyone call auth.signUp directly with an
+    -- arbitrary signup_type, so the real gate must live here: abort (rolling
+    -- back the auth.users insert) when the email was never pre-approved.
+    IF v_linked = 0 THEN
+      RAISE EXCEPTION 'email_not_allowed'
+        USING ERRCODE = 'check_violation';
+    END IF;
 
   END IF;
 
@@ -289,19 +485,12 @@ CREATE TRIGGER on_auth_user_created
 
 
 -- ============================================================
--- 6. RPC — link_user_to_institution
+-- 8. RPC — link_user_to_institution
 --
--- Called from the app when an admin adds an email that already
--- belongs to an existing account. Immediately creates the
--- institution_members row without waiting for signup.
---
--- Usage (in the app):
---   supabase.rpc('link_user_to_institution', {
---     p_institution_id: '...',
---     p_email:          'student@example.com',
---     p_role:           'student',
---     p_added_by:       adminUserId,
---   })
+-- Called from the app when an admin adds an email. If the account
+-- already exists it is linked immediately; otherwise the email is
+-- whitelisted and the trigger links it on signup. All email
+-- comparisons are case-insensitive.
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.link_user_to_institution(
@@ -326,7 +515,7 @@ BEGIN
 
   SELECT id INTO v_profile_id
   FROM   public.profiles
-  WHERE  email = p_email;
+  WHERE  lower(email) = lower(p_email);
 
   IF v_profile_id IS NOT NULL THEN
     -- Account exists → link immediately
@@ -336,7 +525,7 @@ BEGIN
 
     INSERT INTO public.institution_allowed_emails
            (institution_id, email, role, added_by, status)
-    VALUES (p_institution_id, p_email, p_role, p_added_by, 'joined')
+    VALUES (p_institution_id, lower(p_email), p_role, p_added_by, 'joined')
     ON CONFLICT (institution_id, email)
     DO UPDATE SET status   = 'joined',
                   role     = EXCLUDED.role,
@@ -347,7 +536,7 @@ BEGIN
     -- No account yet → add to whitelist; trigger links them on signup
     INSERT INTO public.institution_allowed_emails
            (institution_id, email, role, added_by, status)
-    VALUES (p_institution_id, p_email, p_role, p_added_by, 'pending')
+    VALUES (p_institution_id, lower(p_email), p_role, p_added_by, 'pending')
     ON CONFLICT (institution_id, email)
     DO UPDATE SET role     = EXCLUDED.role,
                   added_by = EXCLUDED.added_by;
