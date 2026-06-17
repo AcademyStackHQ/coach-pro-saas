@@ -25,7 +25,7 @@ export type StudentRow = {
   callingName: string | null
   sports: string[]
   status: 'active' | 'inactive'
-  guardianMobile: string
+  parentMobile: string
   photoUrl: string | null
 }
 
@@ -125,14 +125,14 @@ function AddStudentSheet({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="s_guardian_name">Guardian name *</Label>
-              <Input id="s_guardian_name" name="guardian_name" required />
+              <Label htmlFor="s_parent_name">Parent name *</Label>
+              <Input id="s_parent_name" name="parent_name" required />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="s_guardian_mobile">Guardian mobile *</Label>
+              <Label htmlFor="s_parent_mobile">Parent mobile *</Label>
               <Input
-                id="s_guardian_mobile"
-                name="guardian_mobile"
+                id="s_parent_mobile"
+                name="parent_mobile"
                 type="tel"
                 required
                 placeholder="+919876543210"
@@ -140,20 +140,18 @@ function AddStudentSheet({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="s_guardian_email">Guardian email</Label>
-              <Input
-                id="s_guardian_email"
-                name="guardian_email"
-                type="email"
-                placeholder="parent@example.com"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="s_student_code">Student code</Label>
-              <Input id="s_student_code" name="student_code" placeholder="Roll no. (optional)" />
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="s_parent_email">Parent email</Label>
+            <Input
+              id="s_parent_email"
+              name="parent_email"
+              type="email"
+              placeholder="parent@example.com"
+            />
+            <p className="text-xs text-muted-foreground">
+              A contact field only — siblings can share the same email. A unique
+              student code is assigned automatically.
+            </p>
           </div>
 
           <div className="space-y-1.5">
@@ -199,7 +197,16 @@ function AddStudentSheet({
 
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
           {state.success && (
-            <p className="text-sm font-medium text-green-600">Student created.</p>
+            <p className="text-sm font-medium text-green-600">
+              Student created
+              {state.studentCode && (
+                <>
+                  {' '}— code{' '}
+                  <span className="font-mono">{state.studentCode}</span>
+                </>
+              )}
+              .
+            </p>
           )}
 
           {showDupPrompt ? (
@@ -259,7 +266,7 @@ function StudentRowCard({ student }: { student: StudentRow }) {
             </span>
           )}
         </p>
-        <p className="truncate text-xs text-muted-foreground">{student.guardianMobile}</p>
+        <p className="truncate text-xs text-muted-foreground">{student.parentMobile}</p>
         {student.sports.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1">
             {student.sports.slice(0, 3).map((s) => (
@@ -306,7 +313,7 @@ export function StudentsClient({
       return (
         s.name.toLowerCase().includes(q) ||
         (s.callingName?.toLowerCase().includes(q) ?? false) ||
-        s.guardianMobile.toLowerCase().includes(q)
+        s.parentMobile.toLowerCase().includes(q)
       )
     })
   }, [students, filter, query])
@@ -317,7 +324,7 @@ export function StudentsClient({
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Students</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage student records, guardians, and enrolment.
+            Manage student records, parents, and enrolment.
           </p>
         </div>
         <Button onClick={() => setSheetOpen(true)}>
@@ -347,7 +354,7 @@ export function StudentsClient({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search name or guardian mobile…"
+          placeholder="Search name or parent mobile…"
           className="sm:max-w-xs"
         />
       </div>

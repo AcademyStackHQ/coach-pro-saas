@@ -378,19 +378,19 @@ export function OnboardingWizard({ institution }: { institution: WizardInstituti
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="s_guardian_name">Guardian name</Label>
+                    <Label htmlFor="s_parent_name">Parent name</Label>
                     <Input
-                      id="s_guardian_name"
-                      name="guardian_name"
+                      id="s_parent_name"
+                      name="parent_name"
                       placeholder="Parent / guardian"
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="s_guardian_mobile">Guardian mobile</Label>
+                    <Label htmlFor="s_parent_mobile">Parent mobile</Label>
                     <Input
-                      id="s_guardian_mobile"
-                      name="guardian_mobile"
+                      id="s_parent_mobile"
+                      name="parent_mobile"
                       type="tel"
                       placeholder="+919876543210"
                       required

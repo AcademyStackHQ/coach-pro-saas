@@ -81,10 +81,27 @@ export default function RegisterPage() {
             activate your institution account.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex justify-center">
-          <Link href="/login" className="text-sm text-primary hover:underline">
-            Back to sign in
-          </Link>
+        <CardContent className="space-y-4">
+          {state.institutionCode && (
+            <div className="rounded-lg border bg-muted/40 p-4 text-center">
+              <p className="text-xs text-muted-foreground">Your academy code</p>
+              <p className="mt-1 font-mono text-2xl font-bold tracking-widest">
+                {state.institutionCode}
+              </p>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Every student&apos;s login code starts with this — e.g.{" "}
+                <span className="font-mono">{state.institutionCode}0001</span>.
+              </p>
+            </div>
+          )}
+          <div className="flex justify-center">
+            <Link
+              href="/login"
+              className="text-sm text-primary hover:underline"
+            >
+              Back to sign in
+            </Link>
+          </div>
         </CardContent>
       </Card>
     )

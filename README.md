@@ -44,6 +44,10 @@ Regenerate types after any migration:
 npx supabase gen types typescript --project-id <project-id> > lib/supabase/types.ts
 ```
 
+> Install the `supabase` CLI first (`npm i -D supabase`). Otherwise `npx`'s "Ok to proceed?" prompt is
+> written into `types.ts` and corrupts it (build fails "types.ts is not a module"). Recover with
+> `git restore lib/supabase/types.ts`.
+
 ## Project Structure
 
 ```
@@ -67,6 +71,7 @@ coach-pro-saas/
 ├── lib/
 │   ├── client.ts                 # Supabase browser client
 │   ├── server.ts                 # Supabase server client (SSR)
+│   ├── admin.ts                  # Supabase service-role client (server only — auth.admin.*)
 │   ├── requireRole.ts            # Per-page role guard (reads active_role cookie)
 │   ├── planGuard.ts              # Free-tier plan limit enforcement
 │   ├── constants.ts              # Categories, timezones, availability/colour, plan limits
@@ -81,7 +86,8 @@ coach-pro-saas/
 │       ├── 004_institution_name_check.sql
 │       ├── 005_coaches.sql                 # coaches extension table + RLS
 │       ├── 006_students.sql                # students records table + RLS
-│       └── 007_student_fees.sql            # optional per-student monthly_fee + deposit (paise)
+│       ├── 007_student_fees.sql            # optional per-student monthly_fee + deposit (paise)
+│       └── 008_student_login.sql           # institution code + auto student_code + student-code login
 │
 ├── proxy.ts                      # Auth guard + routing (replaces middleware.ts)
 │
@@ -105,7 +111,7 @@ coach-pro-saas/
 | 1 | Foundation & Auth | 🚧 In Progress |
 | 2 | Academy Onboarding & Settings | ✅ Done |
 | 3 | Coach Management | ✅ Done |
-| 4 | Student Management | 🚧 In Progress |
+| 4 | Student Management | ✅ Done |
 | 5 | Batch Management | 🔲 Pending |
 | 6 | Calendar & Scheduling | 🔲 Pending |
 | 7 | Fee Management | 🔲 Pending |

@@ -1,6 +1,6 @@
 -- ============================================================
--- Migration 005 — Coach Management
--- Adds the `coaches` coaching-profile extension table.
+-- 002 — Coach Management
+-- The `coaches` coaching-profile extension table.
 --
 -- A `coaches` row is NOT an identity — it extends an existing
 -- institution_members row (role='coach') with coaching-specific
@@ -78,10 +78,17 @@ CREATE POLICY "admins or self can insert coach"
     OR (user_id = auth.uid() AND public.is_coach_of(institution_id))
   );
 
--- Admins update anyone; a coach updates only their own row.
+-- Admins update anyone; a coach updates only their own row. WITH CHECK mirrors
+-- USING so the row can't be re-pointed at another user_id on update (without an
+-- explicit WITH CHECK, Postgres reuses USING — make it explicit so it survives
+-- future policy edits).
 CREATE POLICY "admins or self can update coach"
   ON public.coaches FOR UPDATE
   USING (
+    public.is_admin_of(institution_id)
+    OR user_id = auth.uid()
+  )
+  WITH CHECK (
     public.is_admin_of(institution_id)
     OR user_id = auth.uid()
   );

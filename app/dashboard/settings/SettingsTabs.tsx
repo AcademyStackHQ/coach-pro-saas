@@ -27,6 +27,7 @@ export type SettingsData = {
   id: string
   name: string
   slug: string
+  code: string | null
   category: string | null
   address: string | null
   contact_email: string | null
@@ -86,6 +87,21 @@ function ProfileTab({ data, state, action, pending }: {
               <Input id="p_slug" value={data.slug} disabled className="bg-muted/50 cursor-not-allowed" />
               <p className="text-xs text-muted-foreground">Slug cannot be changed after creation.</p>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="p_code">Academy Code</Label>
+            <Input
+              id="p_code"
+              value={data.code ?? '—'}
+              disabled
+              className="bg-muted/50 cursor-not-allowed font-mono tracking-widest"
+            />
+            <p className="text-xs text-muted-foreground">
+              Prefixes every student&apos;s login code (e.g.{' '}
+              <span className="font-mono">{data.code ?? 'XXX'}0001</span>). Fixed
+              after creation.
+            </p>
           </div>
 
           <div className="space-y-1.5">

@@ -17,7 +17,7 @@ export default async function StudentsPage() {
     supabase
       .from('students')
       .select(
-        'id, full_name, calling_name, sports, status, guardian_mobile, photo_url'
+        'id, full_name, calling_name, sports, status, parent_mobile, photo_url'
       )
       .eq('institution_id', institutionId)
       .order('created_at', { ascending: false }),
@@ -35,7 +35,7 @@ export default async function StudentsPage() {
     callingName: s.calling_name,
     sports: s.sports ?? [],
     status: s.status === 'inactive' ? 'inactive' : 'active',
-    guardianMobile: s.guardian_mobile,
+    parentMobile: s.parent_mobile,
     photoUrl: s.photo_url,
   }))
 

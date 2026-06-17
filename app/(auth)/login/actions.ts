@@ -3,6 +3,7 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/server"
+import { studentLoginEmail } from "@/lib/utils"
 
 export type InstitutionOption = {
   institution_id: string
@@ -32,12 +33,18 @@ export async function loginUser(
   prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  const email = formData.get("email") as string
+  const identifier = ((formData.get("email") as string) ?? "").trim()
   const password = formData.get("password") as string
 
-  if (!email || !password) {
-    return { error: "Email and password are required." }
+  if (!identifier || !password) {
+    return { error: "Email or student code and password are required." }
   }
+
+  // Students sign in with their code (no "@"); everyone else with an email.
+  // The code maps to its synthetic Supabase Auth email.
+  const email = identifier.includes("@")
+    ? identifier
+    : studentLoginEmail(identifier)
 
   const supabase = await createClient()
 
@@ -48,7 +55,7 @@ export async function loginUser(
     })
 
   if (signInError || !signInData.user) {
-    return { error: "Invalid email or password." }
+    return { error: "Invalid email/student code or password." }
   }
 
   // RLS lets a member read the *entire* roster of any institution they belong
@@ -88,9 +95,29 @@ export async function loginUser(
 }
 
 export async function selectInstitution(formData: FormData) {
-  const institution_id = formData.get("institution_id") as string
-  const role = formData.get("role") as string
-  await setActiveInstitution(institution_id, role)
+  const institution_id = (formData.get("institution_id") as string) ?? ""
+  if (!institution_id) redirect("/login")
+
+  // Never trust the institution_id/role posted by the form. Verify the signed-in
+  // user actually has an active membership and read the REAL role from it, so a
+  // crafted POST can't point the active session at an institution the user
+  // doesn't belong to. (Downstream guards re-derive role too, but gate here.)
+  const supabase = await createClient()
+  const { data: claims } = await supabase.auth.getClaims()
+  const userId = claims?.claims?.sub
+  if (!userId) redirect("/login")
+
+  const { data: membership } = await supabase
+    .from("institution_members")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("institution_id", institution_id)
+    .eq("status", "active")
+    .maybeSingle()
+
+  if (!membership) redirect("/login")
+
+  await setActiveInstitution(institution_id, membership.role)
   redirect("/dashboard")
 }
 

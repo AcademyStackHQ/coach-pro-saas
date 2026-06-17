@@ -111,7 +111,7 @@ export async function saveWorkingHours(
 
 // Step 4 — optional: enrol the first student.
 // Students are academy-owned RECORDS, not logins (under-14 kids have no email,
-// siblings share a guardian email) — so this is a direct `students` insert, NOT
+// siblings share a parent email) — so this is a direct `students` insert, NOT
 // the allowlist/signup flow. See Module 4 / the student identity model.
 export async function enrolFirstStudent(
   _prev: ActionState,
@@ -122,21 +122,21 @@ export async function enrolFirstStudent(
 
   const fullName = (formData.get('full_name') as string)?.trim() ?? ''
   const dob = (formData.get('dob') as string)?.trim() ?? ''
-  const guardianName = (formData.get('guardian_name') as string)?.trim() ?? ''
-  const guardianMobile = (formData.get('guardian_mobile') as string)?.trim() ?? ''
+  const parentName = (formData.get('parent_name') as string)?.trim() ?? ''
+  const parentMobile = (formData.get('parent_mobile') as string)?.trim() ?? ''
 
   const parsed = z
     .object({
       full_name: z.string().min(1, 'Student name is required.'),
       dob: z.string().min(1, 'Date of birth is required.'),
-      guardian_name: z.string().min(1, 'Guardian name is required.'),
-      guardian_mobile: z.string().regex(/^\+?\d{8,15}$/, 'Enter a valid mobile number.'),
+      parent_name: z.string().min(1, 'Parent name is required.'),
+      parent_mobile: z.string().regex(/^\+?\d{8,15}$/, 'Enter a valid mobile number.'),
     })
     .safeParse({
       full_name: fullName,
       dob,
-      guardian_name: guardianName,
-      guardian_mobile: guardianMobile,
+      parent_name: parentName,
+      parent_mobile: parentMobile,
     })
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
@@ -149,12 +149,25 @@ export async function enrolFirstStudent(
     return { error: 'Could not verify plan limits. Please try again.' }
   }
 
+  // Generate the academy student code (atomic per-institution counter, e.g.
+  // MVA0001) — same as the main Add Student flow. Without it the record can
+  // never be issued a login later (enableStudentLogin requires student_code).
+  // TODO(types): drop the cast once migration 008 is applied + types regenerated.
+  const { data: studentCode, error: codeError } = await (supabase.rpc as any)(
+    'next_student_code',
+    { p_institution_id: institutionId }
+  )
+  if (codeError || !studentCode) {
+    return { error: 'Could not generate a student code. Please try again.' }
+  }
+
   const { error } = await supabase.from('students').insert({
     institution_id: institutionId,
     full_name: fullName,
     dob,
-    guardian_name: guardianName,
-    guardian_mobile: guardianMobile,
+    parent_name: parentName,
+    parent_mobile: parentMobile,
+    student_code: studentCode as string,
   })
 
   if (error) return { error: 'Failed to enrol student. Please try again.' }

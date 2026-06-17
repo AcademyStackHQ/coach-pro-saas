@@ -1,19 +1,18 @@
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { getActiveSession, type ActiveSession, type Role } from '@/lib/activeSession'
 
 /**
  * Per-page role guard for the single /dashboard route group.
  *
- * Role lives in the httpOnly `active_role` cookie (set at login / institution
- * switch and already validated by proxy.ts). There is no role logic in
- * proxy.ts beyond auth + institution cookie, so admin-only and coach-only
- * pages call this at the top of the server component.
+ * The role is re-derived from the membership row (see getActiveSession), NOT
+ * from the unsigned `active_role` cookie — so a student who edits the cookie to
+ * "admin" still can't reach admin-only pages. Non-matching roles are bounced to
+ * /dashboard; a missing/stale active institution is bounced to /login.
  *
- *   await requireRole('admin')  // redirects non-admins to /dashboard
+ *   const session = await requireRole('admin')  // redirects non-admins
  */
-export async function requireRole(role: 'admin' | 'coach' | 'student') {
-  const cs = await cookies()
-  const institutionId = cs.get('active_institution_id')?.value
-  if (!institutionId) redirect('/login')
-  if (cs.get('active_role')?.value !== role) redirect('/dashboard')
+export async function requireRole(role: Role): Promise<ActiveSession> {
+  const session = await getActiveSession()
+  if (session.role !== role) redirect('/dashboard')
+  return session
 }

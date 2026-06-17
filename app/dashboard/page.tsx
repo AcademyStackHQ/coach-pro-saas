@@ -1,25 +1,22 @@
-import { cookies } from "next/headers"
 import { createClient } from "@/lib/server"
+import { getActiveSession } from "@/lib/activeSession"
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies()
-  const institutionId = cookieStore.get("active_institution_id")?.value
-  const role = cookieStore.get("active_role")?.value ?? ""
+  // Role/institution verified against the membership row, not the cookie.
+  const { userId, institutionId, role } = await getActiveSession()
 
   const supabase = await createClient()
-  const { data: claimsData } = await supabase.auth.getClaims()
-  const userId = claimsData?.claims?.sub
 
   const [{ data: institution }, { data: profile }] = await Promise.all([
     supabase
       .from("institutions")
       .select("name")
-      .eq("id", institutionId!)
+      .eq("id", institutionId)
       .single(),
     supabase
       .from("profiles")
       .select("full_name")
-      .eq("id", userId!)
+      .eq("id", userId)
       .single(),
   ])
 

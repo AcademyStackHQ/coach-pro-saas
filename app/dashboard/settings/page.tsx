@@ -1,17 +1,13 @@
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/server'
+import { requireRole } from '@/lib/requireRole'
 import { SettingsTabs, type SettingsData } from './SettingsTabs'
 
 export const metadata = { title: 'Settings — CoachPro' }
 
 export default async function SettingsPage() {
-  const cs = await cookies()
-  const institutionId = cs.get('active_institution_id')?.value
-  const role = cs.get('active_role')?.value
-
-  if (!institutionId) redirect('/login')
-  if (role !== 'admin') redirect('/dashboard')
+  // Verifies the real role from the membership row, not the unsigned cookie.
+  const { institutionId } = await requireRole('admin')
 
   const supabase = await createClient()
 
@@ -19,7 +15,7 @@ export default async function SettingsPage() {
     await Promise.all([
       supabase
         .from('institutions')
-        .select('id, name, slug, timezone, working_hours, plan, sms_credits, category, address, contact_email, contact_mobile, fee_config')
+        .select('id, name, slug, code, timezone, working_hours, plan, sms_credits, category, address, contact_email, contact_mobile, fee_config')
         .eq('id', institutionId)
         .single(),
 

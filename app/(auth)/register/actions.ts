@@ -24,6 +24,8 @@ export type RegisterState = {
   }
   message?: string | null
   success?: boolean
+  // The auto-generated academy code (e.g. "MVA"), shown on the success screen.
+  institutionCode?: string
 }
 
 function toSlug(name: string): string {
@@ -59,6 +61,28 @@ export async function registerInstitution(
   const supabase = await createClient()
   const origin = (await headers()).get("origin")
 
+  // Server-side guard against a duplicate academy name. The client previews
+  // availability, but that's a TOCTOU hint only — re-check here so a taken name
+  // returns a clean field error instead of an opaque "Database error saving new
+  // user" bubbling up from the signup trigger's unique-violation.
+  const { data: nameAvailable } = await supabase.rpc(
+    "is_institution_name_available",
+    { p_name: institution_name }
+  )
+  if (nameAvailable === false) {
+    return {
+      errors: { institution_name: ["That academy name is already taken."] },
+    }
+  }
+
+  // Preview the academy code now (SECURITY DEFINER RPC, callable pre-auth) so we
+  // can both show it on the success screen and pass it to the signup trigger.
+  // TODO(types): drop the cast once migration 008 is applied + types regenerated.
+  const { data: institutionCode } = await (supabase.rpc as any)(
+    "generate_institution_code",
+    { p_name: institution_name }
+  )
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -68,6 +92,7 @@ export async function registerInstitution(
         signup_type: "institution_admin",
         institution_name,
         institution_slug: slug,
+        institution_code: institutionCode ?? undefined,
         full_name,
         mobile,
         category,
@@ -85,7 +110,10 @@ export async function registerInstitution(
     return { message: error.message }
   }
 
-  return { success: true }
+  return {
+    success: true,
+    institutionCode: (institutionCode as string | null) ?? undefined,
+  }
 }
 
 export async function checkInstitutionName(name: string): Promise<boolean> {

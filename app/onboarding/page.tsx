@@ -1,22 +1,16 @@
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/server'
+import { getActiveSession } from '@/lib/activeSession'
 import { OnboardingWizard, type WizardInstitution } from './Wizard'
 
 export default async function OnboardingPage() {
-  const cs = await cookies()
-  const institutionId = cs.get('active_institution_id')?.value
-  const role = cs.get('active_role')?.value
-
-  if (!institutionId) redirect('/login')
+  // Verifies the real role from the membership row, not the unsigned cookie.
+  const { institutionId, role } = await getActiveSession()
 
   // Only admins complete the academy onboarding
   if (role !== 'admin') redirect('/dashboard')
 
   const supabase = await createClient()
-
-  const { data: claimsData } = await supabase.auth.getClaims()
-  if (!claimsData?.claims?.sub) redirect('/login')
 
   const { data } = await supabase
     .from('institutions')

@@ -112,3 +112,8 @@ export const JERSEY_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 // path — deferred). A product policy enforced in the UI/server action, never
 // as a DB constraint, since the threshold may change.
 export const STUDENT_LOGIN_AGE = 14
+
+// Domain for the synthetic email behind a student-code login. The student code
+// is globally unique, so `<code>@<domain>` is a unique Supabase Auth identity.
+// This mailbox is never sent to — swap for an owned domain anytime.
+export const STUDENT_LOGIN_EMAIL_DOMAIN = 'students.coachpro.local'

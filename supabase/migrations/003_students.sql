@@ -1,13 +1,17 @@
 -- ============================================================
--- Migration 006 — Student Management
--- Adds the `students` table: academy-owned records, NOT logins.
+-- 003 — Student Management
+-- The `students` table: academy-owned records, NOT logins.
 --
 -- A student is a profile OWNED by the institution, decoupled from
 -- auth identity. Under-14 kids have no email; a parent enrols
--- multiple siblings under the SAME guardian_email (no unique
--- constraint). The two nullable FKs (user_id, guardian_user_id)
--- ship now but stay NULL until the 14+ login / parent portal land,
--- so neither needs a later migration.
+-- multiple siblings under the SAME parent_email (no unique
+-- constraint). The two nullable FKs (user_id, parent_user_id)
+-- ship now but stay NULL until the 14+ login / parent portal land.
+--
+-- student_code = institution code + per-institution sequence
+-- (e.g. MVA0007), generated via next_student_code() in 001. It is
+-- globally unique so a synthetic login email can be built from the
+-- code alone — no academy selector at login.
 -- ============================================================
 
 
@@ -18,14 +22,14 @@
 CREATE TABLE public.students (
   id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   institution_id   UUID        NOT NULL REFERENCES public.institutions(id) ON DELETE CASCADE,
-  student_code     TEXT,                                   -- optional academy roll number
+  student_code     TEXT,                                   -- academy roll number (auto-generated)
   full_name        TEXT        NOT NULL,
   calling_name     TEXT,
   dob              DATE        NOT NULL,
   gender           TEXT        CHECK (gender IN ('male', 'female', 'other')),
-  guardian_name    TEXT        NOT NULL,
-  guardian_mobile  TEXT        NOT NULL,                   -- E.164, e.g. +919876543210
-  guardian_email   TEXT,                                   -- plain contact — NO unique constraint
+  parent_name      TEXT        NOT NULL,
+  parent_mobile    TEXT        NOT NULL,                   -- E.164, e.g. +919876543210
+  parent_email     TEXT,                                   -- plain contact — NO unique constraint
   sports           TEXT[]      DEFAULT '{}',
   enrolment_date   DATE        DEFAULT now(),
   status           TEXT        DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
@@ -33,9 +37,11 @@ CREATE TABLE public.students (
   jersey_size      TEXT,
   jersey_number    INT,
   jersey_name      TEXT,
+  monthly_fee      INT,                                    -- recurring monthly fee, in paise
+  deposit_amount   INT,                                    -- one-time advance / deposit, in paise
   sms_opt_in       BOOLEAN     DEFAULT true,
   user_id          UUID        REFERENCES public.profiles(id) ON DELETE SET NULL,  -- 14+ own login (NULL now)
-  guardian_user_id UUID        REFERENCES public.profiles(id) ON DELETE SET NULL,  -- parent portal (NULL now)
+  parent_user_id   UUID        REFERENCES public.profiles(id) ON DELETE SET NULL,  -- parent portal (NULL now)
   created_at       TIMESTAMPTZ DEFAULT now()
 );
 
@@ -49,6 +55,13 @@ CREATE TABLE public.students (
 -- for any future CSV re-import.
 CREATE UNIQUE INDEX idx_students_code_unique
   ON public.students (institution_id, student_code)
+  WHERE student_code IS NOT NULL;
+
+-- Global unique student_code (case-insensitive) — lets the synthetic
+-- login email be built from the code alone. Lower() matches Supabase's
+-- lowercased emails.
+CREATE UNIQUE INDEX idx_students_code_global_unique
+  ON public.students (lower(student_code))
   WHERE student_code IS NOT NULL;
 
 -- Duplicate DETECTION key (non-unique) — case-insensitive name + dob.
@@ -76,8 +89,8 @@ CREATE POLICY "members read students"
   ON public.students FOR SELECT
   USING (
     institution_id = ANY(public.get_my_institution_ids())
-    OR user_id          = auth.uid()
-    OR guardian_user_id = auth.uid()
+    OR user_id        = auth.uid()
+    OR parent_user_id = auth.uid()
   );
 
 -- Only admins create / edit / delete students (deletes rare — prefer the

@@ -20,6 +20,20 @@ async function getUserId(supabase: Awaited<ReturnType<typeof createClient>>) {
   return data?.claims?.sub as string | undefined
 }
 
+// Admin gate for actions that edit a coach OTHER than the caller. RLS already
+// blocks cross-user writes, but gate explicitly (like the students module) so
+// the user gets a clear "Not authorised" and a future switch to the admin
+// client can't silently drop the check.
+async function isAdmin(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  institutionId: string
+): Promise<boolean> {
+  const { data } = await supabase.rpc('is_admin_of', {
+    p_institution_id: institutionId,
+  })
+  return data === true
+}
+
 // ---------------------------------------------------------------------------
 // Invite a coach — reuses the Module 1 allowlist flow (same as onboarding
 // Step 2). Wrapped in planGuard so the Free tier blocks a 2nd active coach.
@@ -85,6 +99,8 @@ export async function updateCoachProfile(
   let color = ((formData.get('color') as string) ?? '').trim()
 
   const supabase = await createClient()
+  if (!(await isAdmin(supabase, institutionId)))
+    return { error: 'Not authorised.' }
 
   // Assign a colour on first create if none chosen — next unused in palette.
   if (!color) {
@@ -128,6 +144,9 @@ export async function saveCoachAvailability(
   if (availability === null) return { error: 'Invalid availability format.' }
 
   const supabase = await createClient()
+  if (!(await isAdmin(supabase, institutionId)))
+    return { error: 'Not authorised.' }
+
   const { error } = await supabase
     .from('coaches')
     .upsert(

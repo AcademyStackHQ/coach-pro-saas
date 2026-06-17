@@ -2,12 +2,15 @@
 
 import { useActionState, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import {
   updateStudent,
   deactivateStudent,
   reactivateStudent,
+  enableStudentLogin,
+  resetStudentPassword,
   type ActionState,
+  type LoginActionState,
 } from '../actions'
 import { SportsField } from '@/components/dashboard/SportsField'
 import { GENDERS, JERSEY_SIZES } from '@/lib/constants'
@@ -15,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { cn, paiseToRupees } from '@/lib/utils'
+import { cn, paiseToRupees, studentLoginEmail } from '@/lib/utils'
 
 export type StudentDetailData = {
   id: string
@@ -25,11 +28,12 @@ export type StudentDetailData = {
   dob: string | null
   gender: string | null
   student_code: string | null
+  user_id: string | null
   enrolment_date: string | null
   sports: string[]
-  guardian_name: string
-  guardian_mobile: string
-  guardian_email: string | null
+  parent_name: string
+  parent_mobile: string
+  parent_email: string | null
   sms_opt_in: boolean
   jersey_size: string | null
   jersey_number: number | null
@@ -41,7 +45,8 @@ export type StudentDetailData = {
 
 const TABS = [
   { id: 'profile', label: 'Profile' },
-  { id: 'guardian', label: 'Guardian' },
+  { id: 'parent', label: 'Parent' },
+  { id: 'login', label: 'Login' },
   { id: 'jersey', label: 'Jersey' },
   { id: 'fees', label: 'Fees' },
   { id: 'batches', label: 'Batches' },
@@ -127,9 +132,13 @@ function ProfileTab({ data }: { data: StudentDetailData }) {
               <Label htmlFor="student_code">Student code</Label>
               <Input
                 id="student_code"
-                name="student_code"
-                defaultValue={data.student_code ?? ''}
+                value={data.student_code ?? '—'}
+                disabled
+                className="bg-muted/50 cursor-not-allowed font-mono tracking-wider"
               />
+              <p className="text-xs text-muted-foreground">
+                Auto-assigned; also the student&apos;s login handle.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="enrolment_date">Enrolment date</Label>
@@ -154,48 +163,48 @@ function ProfileTab({ data }: { data: StudentDetailData }) {
   )
 }
 
-function GuardianTab({ data }: { data: StudentDetailData }) {
+function ParentTab({ data }: { data: StudentDetailData }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(updateStudent, {})
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Guardian</CardTitle>
+        <CardTitle>Parent</CardTitle>
       </CardHeader>
       <CardContent>
         <form action={action} className="space-y-5">
           <input type="hidden" name="id" value={data.id} />
-          <input type="hidden" name="section" value="guardian" />
+          <input type="hidden" name="section" value="parent" />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="guardian_name">Guardian name *</Label>
+              <Label htmlFor="parent_name">Parent name *</Label>
               <Input
-                id="guardian_name"
-                name="guardian_name"
-                defaultValue={data.guardian_name}
+                id="parent_name"
+                name="parent_name"
+                defaultValue={data.parent_name}
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="guardian_mobile">Guardian mobile *</Label>
+              <Label htmlFor="parent_mobile">Parent mobile *</Label>
               <Input
-                id="guardian_mobile"
-                name="guardian_mobile"
+                id="parent_mobile"
+                name="parent_mobile"
                 type="tel"
-                defaultValue={data.guardian_mobile}
+                defaultValue={data.parent_mobile}
                 required
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="guardian_email">Guardian email</Label>
+            <Label htmlFor="parent_email">Parent email</Label>
             <Input
-              id="guardian_email"
-              name="guardian_email"
+              id="parent_email"
+              name="parent_email"
               type="email"
-              defaultValue={data.guardian_email ?? ''}
+              defaultValue={data.parent_email ?? ''}
             />
             <p className="text-xs text-muted-foreground">
               A contact field only — siblings can share the same email.
@@ -209,7 +218,7 @@ function GuardianTab({ data }: { data: StudentDetailData }) {
               defaultChecked={data.sms_opt_in}
               className="size-4 rounded border-input accent-primary"
             />
-            <span className="text-sm">Guardian consents to SMS notifications</span>
+            <span className="text-sm">Parent consents to SMS notifications</span>
           </label>
 
           <SaveRow state={state} pending={pending} />
@@ -330,6 +339,125 @@ function FeesTab({ data }: { data: StudentDetailData }) {
   )
 }
 
+function LoginTab({ data }: { data: StudentDetailData }) {
+  const hasLogin = !!data.user_id
+  // The action switches by login state; both share LoginActionState.
+  const [state, action, pending] = useActionState<LoginActionState, FormData>(
+    hasLogin ? resetStudentPassword : enableStudentLogin,
+    {}
+  )
+  const code = data.student_code
+  const loginEmail = code ? studentLoginEmail(code) : null
+  const [showPassword, setShowPassword] = useState(false)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Login</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {!code ? (
+          <p className="text-sm text-muted-foreground">
+            This student has no code yet. Reload the page and try again.
+          </p>
+        ) : (
+          <>
+            <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Student code</span>
+                <span className="font-mono text-sm font-semibold tracking-wider">
+                  {code}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Status</span>
+                <span
+                  className={cn(
+                    'text-sm font-medium',
+                    hasLogin ? 'text-green-600' : 'text-muted-foreground'
+                  )}
+                >
+                  {hasLogin ? 'Login enabled' : 'No login yet'}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              The student signs in with their{' '}
+              <span className="font-medium text-foreground">student code</span> (
+              <span className="font-mono">{code}</span>) and the password below —
+              no email needed, so siblings sharing a parent email never clash.
+              {loginEmail && (
+                <span className="mt-1 block text-xs">
+                  Internal sign-in identity:{' '}
+                  <span className="font-mono">{loginEmail}</span>
+                </span>
+              )}
+            </p>
+
+            <form action={action} className="space-y-4">
+              <input type="hidden" name="id" value={data.id} />
+              <div className="space-y-1.5">
+                <Label htmlFor="login_password">
+                  {hasLogin ? 'New password' : 'Set password'}
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="login_password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Min 8 chars, with a letter and a number"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <span
+                  className={cn(
+                    'text-sm font-medium',
+                    state.error ? 'text-destructive' : 'text-green-600'
+                  )}
+                >
+                  {state.error
+                    ? state.error
+                    : state.success
+                      ? hasLogin
+                        ? 'Password updated.'
+                        : 'Login enabled.'
+                      : ''}
+                </span>
+                <Button type="submit" disabled={pending} className="ml-auto">
+                  {pending
+                    ? 'Saving…'
+                    : hasLogin
+                      ? 'Reset password'
+                      : 'Enable login'}
+                </Button>
+              </div>
+            </form>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 function Placeholder({ module }: { module: string }) {
   return (
     <Card>
@@ -367,7 +495,7 @@ export function StudentDetail({ data }: { data: StudentDetailData }) {
           <div>
             <h1 className="text-xl font-bold tracking-tight">{data.full_name}</h1>
             <p className="text-sm text-muted-foreground">
-              Guardian: {data.guardian_name} · {data.guardian_mobile}
+              Parent: {data.parent_name} · {data.parent_mobile}
             </p>
           </div>
         </div>
@@ -399,7 +527,8 @@ export function StudentDetail({ data }: { data: StudentDetailData }) {
       </div>
 
       {tab === 'profile' && <ProfileTab data={data} />}
-      {tab === 'guardian' && <GuardianTab data={data} />}
+      {tab === 'parent' && <ParentTab data={data} />}
+      {tab === 'login' && <LoginTab data={data} />}
       {tab === 'jersey' && <JerseyTab data={data} />}
       {tab === 'fees' && <FeesTab data={data} />}
       {tab === 'batches' && <Placeholder module="Module 5" />}

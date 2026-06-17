@@ -11,7 +11,6 @@ export default async function DashboardLayout({
 }) {
   const cookieStore = await cookies()
   const institutionId = cookieStore.get("active_institution_id")?.value
-  const role = cookieStore.get("active_role")?.value ?? ""
 
   if (!institutionId) redirect("/login")
 
@@ -41,6 +40,15 @@ export default async function DashboardLayout({
     ])
 
   if (!institution) redirect("/login")
+
+  // Derive the role from the actual membership for the active institution —
+  // never the unsigned `active_role` cookie. A stale/tampered cookie pointing
+  // at an institution the user no longer belongs to lands here with no match.
+  const activeMembership = (memberships ?? []).find(
+    (m) => m.institution_id === institutionId
+  )
+  if (!activeMembership) redirect("/login")
+  const role = activeMembership.role
 
   // First-time admin setup: send to the onboarding wizard
   if (role === "admin" && !institution.onboarding_complete) redirect("/onboarding")
