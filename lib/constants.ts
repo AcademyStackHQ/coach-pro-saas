@@ -53,3 +53,62 @@ export const DEFAULT_WORKING_HOURS: WorkingHoursMap = {
 }
 
 export const FREE_PLAN_LIMITS = { student: 15, coach: 1, batch: 2 } as const
+
+// ----------------------------------------------------------------------------
+// Pricing (Growth plan) — per active student, per month, in ₹.
+// First FREE_PLAN_LIMITS.student students are always free; only students beyond
+// that are billable. Annual billing applies a ~20% discount.
+// ----------------------------------------------------------------------------
+export const PER_STUDENT_MONTHLY = 20
+export const PER_STUDENT_ANNUAL = 16
+
+// ----------------------------------------------------------------------------
+// Coach availability (Module 3) — multiple time blocks per day (split shifts).
+// Distinct from institutions.working_hours, which is a single open/start/end
+// block per day. Shape: { mon: [{ start, end }], tue: [], ... }
+// ----------------------------------------------------------------------------
+
+export type TimeBlock = { start: string; end: string }
+export type AvailabilityMap = Record<DayKey, TimeBlock[]>
+
+export const DEFAULT_AVAILABILITY: AvailabilityMap = {
+  mon: [],
+  tue: [],
+  wed: [],
+  thu: [],
+  fri: [],
+  sat: [],
+  sun: [],
+}
+
+// Distinct calendar-lane colours assigned to coaches (Module 6 reads these).
+// Auto-assigned in order; admin can override per coach.
+export const COACH_COLORS = [
+  '#2563eb', // blue
+  '#16a34a', // green
+  '#db2777', // pink
+  '#d97706', // amber
+  '#7c3aed', // violet
+  '#0891b2', // cyan
+  '#dc2626', // red
+  '#4f46e5', // indigo
+  '#65a30d', // lime
+  '#c026d3', // fuchsia
+] as const
+
+// ----------------------------------------------------------------------------
+// Students (Module 4) — academy-owned records, not logins.
+// ----------------------------------------------------------------------------
+
+export const GENDERS = [
+  { value: 'male',   label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other',  label: 'Other' },
+] as const
+
+export const JERSEY_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
+
+// Age threshold above which a student may have their own login (14+ invite
+// path — deferred). A product policy enforced in the UI/server action, never
+// as a DB constraint, since the threshold may change.
+export const STUDENT_LOGIN_AGE = 14

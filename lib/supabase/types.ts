@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      coaches: {
+        Row: {
+          availability: Json | null
+          bio: string | null
+          color: string | null
+          created_at: string | null
+          id: string
+          institution_id: string
+          joined_at: string | null
+          sports: string[] | null
+          user_id: string
+        }
+        Insert: {
+          availability?: Json | null
+          bio?: string | null
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          institution_id: string
+          joined_at?: string | null
+          sports?: string[] | null
+          user_id: string
+        }
+        Update: {
+          availability?: Json | null
+          bio?: string | null
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          institution_id?: string
+          joined_at?: string | null
+          sports?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaches_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institution_allowed_emails: {
         Row: {
           added_by: string | null
@@ -103,7 +154,12 @@ export type Database = {
       }
       institutions: {
         Row: {
+          address: string | null
+          category: string | null
+          contact_email: string | null
+          contact_mobile: string | null
           created_at: string | null
+          fee_config: Json | null
           id: string
           logo_url: string | null
           name: string
@@ -116,7 +172,12 @@ export type Database = {
           working_hours: Json | null
         }
         Insert: {
+          address?: string | null
+          category?: string | null
+          contact_email?: string | null
+          contact_mobile?: string | null
           created_at?: string | null
+          fee_config?: Json | null
           id?: string
           logo_url?: string | null
           name: string
@@ -129,7 +190,12 @@ export type Database = {
           working_hours?: Json | null
         }
         Update: {
+          address?: string | null
+          category?: string | null
+          contact_email?: string | null
+          contact_mobile?: string | null
           created_at?: string | null
+          fee_config?: Json | null
           id?: string
           logo_url?: string | null
           name?: string
@@ -170,6 +236,106 @@ export type Database = {
         }
         Relationships: []
       }
+      students: {
+        Row: {
+          calling_name: string | null
+          created_at: string | null
+          deposit_amount: number | null
+          dob: string
+          enrolment_date: string | null
+          full_name: string
+          gender: string | null
+          guardian_email: string | null
+          guardian_mobile: string
+          guardian_name: string
+          guardian_user_id: string | null
+          id: string
+          institution_id: string
+          jersey_name: string | null
+          jersey_number: number | null
+          jersey_size: string | null
+          monthly_fee: number | null
+          photo_url: string | null
+          sms_opt_in: boolean | null
+          sports: string[] | null
+          status: string | null
+          student_code: string | null
+          user_id: string | null
+        }
+        Insert: {
+          calling_name?: string | null
+          created_at?: string | null
+          deposit_amount?: number | null
+          dob: string
+          enrolment_date?: string | null
+          full_name: string
+          gender?: string | null
+          guardian_email?: string | null
+          guardian_mobile: string
+          guardian_name: string
+          guardian_user_id?: string | null
+          id?: string
+          institution_id: string
+          jersey_name?: string | null
+          jersey_number?: number | null
+          jersey_size?: string | null
+          monthly_fee?: number | null
+          photo_url?: string | null
+          sms_opt_in?: boolean | null
+          sports?: string[] | null
+          status?: string | null
+          student_code?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          calling_name?: string | null
+          created_at?: string | null
+          deposit_amount?: number | null
+          dob?: string
+          enrolment_date?: string | null
+          full_name?: string
+          gender?: string | null
+          guardian_email?: string | null
+          guardian_mobile?: string
+          guardian_name?: string
+          guardian_user_id?: string | null
+          id?: string
+          institution_id?: string
+          jersey_name?: string | null
+          jersey_number?: number | null
+          jersey_size?: string | null
+          monthly_fee?: number | null
+          photo_url?: string | null
+          sms_opt_in?: boolean | null
+          sports?: string[] | null
+          status?: string | null
+          student_code?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_guardian_user_id_fkey"
+            columns: ["guardian_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -177,8 +343,12 @@ export type Database = {
     Functions: {
       get_my_institution_ids: { Args: never; Returns: string[] }
       is_admin_of: { Args: { p_institution_id: string }; Returns: boolean }
+      is_coach_of: { Args: { p_institution_id: string }; Returns: boolean }
       is_email_allowed: { Args: { p_email: string }; Returns: boolean }
-      is_institution_name_available: { Args: { p_name: string }; Returns: boolean }
+      is_institution_name_available: {
+        Args: { p_name: string }
+        Returns: boolean
+      }
       link_user_to_institution: {
         Args: {
           p_added_by: string

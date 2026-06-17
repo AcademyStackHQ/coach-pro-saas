@@ -8,6 +8,7 @@ import {
   Calendar,
   Check,
   ChevronsUpDown,
+  Clock,
   CreditCard,
   GraduationCap,
   LayoutDashboard,
@@ -47,7 +48,7 @@ type NavItem = { href: string; label: string; icon: React.ElementType }
 
 const ADMIN_NAV: NavItem[] = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/members", label: "Members", icon: Users },
+  { href: "/dashboard/students", label: "Students", icon: Users },
   { href: "/dashboard/coaches", label: "Coaches", icon: GraduationCap },
   { href: "/dashboard/batches", label: "Batches", icon: Users },
   { href: "/dashboard/calendar", label: "Calendar", icon: Calendar },
@@ -59,6 +60,7 @@ const COACH_NAV: NavItem[] = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/batches", label: "My Batches", icon: Users },
   { href: "/dashboard/calendar", label: "Calendar", icon: Calendar },
+  { href: "/dashboard/availability", label: "My Availability", icon: Clock },
 ]
 
 const STUDENT_NAV: NavItem[] = [

@@ -1,6 +1,6 @@
 ﻿# Module 0 — Marketing Site
 
-**Status:** `🔲 Pending`
+**Status:** `🚧 In Progress`
 **Priority:** 0 — can be built in parallel with Module 1; does not block app modules
 **Back to index:** [docs/README.md](../README.md)
 

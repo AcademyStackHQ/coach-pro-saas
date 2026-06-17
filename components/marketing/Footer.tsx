@@ -6,18 +6,18 @@ const columns = [
     heading: "Product",
     links: [
       { label: "Features", href: "/features" },
-      { label: "Pricing", href: "/pricing" },
       { label: "How it works", href: "/how-it-works" },
-      { label: "Changelog", href: "/changelog" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "Use cases", href: "/stories" },
     ],
   },
   {
     heading: "Company",
     links: [
-      { label: "About", href: "/about" },
-      { label: "Blog", href: "/blog" },
-      { label: "Careers", href: "/careers" },
-      { label: "Contact", href: "/contact" },
+      { label: "Contact", href: "mailto:vinothdevaraj14@gmail.com" },
+      { label: "Get started", href: "/register" },
+      { label: "Join your academy", href: "/signup" },
+      { label: "Sign in", href: "/login" },
     ],
   },
   {
@@ -41,8 +41,9 @@ export function Footer() {
               <span className="text-brand-light">Coach</span>Pro
             </Link>
             <p className="mt-3 text-sm leading-relaxed text-background/60">
-              The cloud platform that helps sports academies manage students,
-              schedules, fees and communications — all in one place.
+              The all-in-one platform that helps academies and institutes of
+              every kind manage students, schedules, fees and communications —
+              all in one place.
             </p>
           </div>
 
@@ -53,16 +54,23 @@ export function Footer() {
                 {col.heading}
               </h3>
               <ul className="mt-4 flex flex-col gap-2.5">
-                {col.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-background/70 transition-colors hover:text-background"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
+                {col.links.map((link) => {
+                  const className =
+                    "text-sm text-background/70 transition-colors hover:text-background"
+                  return (
+                    <li key={link.label}>
+                      {link.href.startsWith("mailto:") ? (
+                        <a href={link.href} className={className}>
+                          {link.label}
+                        </a>
+                      ) : (
+                        <Link href={link.href} className={className}>
+                          {link.label}
+                        </Link>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ))}

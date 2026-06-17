@@ -16,7 +16,7 @@ const navLinks = [
   { href: "/features", label: "Features" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/stories", label: "Stories" },
+  { href: "/stories", label: "Use cases" },
 ]
 
 export function Navbar() {
@@ -56,12 +56,6 @@ export function Navbar() {
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             Sign in
-          </Link>
-          <Link
-            href="/signup"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Join your academy
           </Link>
           <Link
             href="/register"
@@ -114,13 +108,6 @@ export function Navbar() {
 
               {/* CTAs */}
               <div className="mt-auto flex flex-col gap-2 border-t p-4">
-                <Link
-                  href="/signup"
-                  onClick={() => setOpen(false)}
-                  className={cn(buttonVariants({ variant: "outline" }), "w-full justify-center")}
-                >
-                  Join your academy
-                </Link>
                 <Link
                   href="/login"
                   onClick={() => setOpen(false)}

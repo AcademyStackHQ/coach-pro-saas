@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createClient } from '@/lib/server'
+import type { Json } from '@/lib/supabase/types'
 
 export type ActionState = { success?: boolean; error?: string }
 
@@ -35,8 +36,7 @@ export async function updateAcademyProfile(
   const supabase = await createClient()
   const { error } = await supabase
     .from('institutions')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ name, category, address, contact_email, contact_mobile, timezone } as any)
+    .update({ name, category, address, contact_email, contact_mobile, timezone })
     .eq('id', institutionId)
 
   if (error) return { error: 'Failed to update profile.' }
@@ -54,9 +54,9 @@ export async function updateWorkingHours(
   const raw = formData.get('working_hours') as string
   if (!raw) return { error: 'No hours data provided.' }
 
-  let workingHours: unknown
+  let workingHours: Json
   try {
-    workingHours = JSON.parse(raw)
+    workingHours = JSON.parse(raw) as Json
   } catch {
     return { error: 'Invalid hours format.' }
   }
@@ -64,8 +64,7 @@ export async function updateWorkingHours(
   const supabase = await createClient()
   const { error } = await supabase
     .from('institutions')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ working_hours: workingHours as any })
+    .update({ working_hours: workingHours })
     .eq('id', institutionId)
 
   if (error) return { error: 'Failed to update working hours.' }
@@ -92,7 +91,7 @@ export async function updateFeeConfig(
   )
   const receipt_prefix = (formData.get('receipt_prefix') as string)?.trim() || 'RCP'
 
-  const feeConfig = {
+  const feeConfig: Json = {
     currency,
     late_fee_enabled,
     late_fee_amount,
@@ -103,8 +102,7 @@ export async function updateFeeConfig(
   const supabase = await createClient()
   const { error } = await supabase
     .from('institutions')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ fee_config: feeConfig } as any)
+    .update({ fee_config: feeConfig })
     .eq('id', institutionId)
 
   if (error) return { error: 'Failed to update fee settings.' }

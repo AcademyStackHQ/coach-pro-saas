@@ -19,7 +19,7 @@ export default function HowItWorksPage() {
           Three steps to a fully managed academy.
         </p>
       </div>
-      <HowItWorks />
+      <HowItWorks showHeader={false} />
     </div>
   )
 }

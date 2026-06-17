@@ -6,61 +6,69 @@ import { Check } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
+import {
+  FREE_PLAN_LIMITS,
+  PER_STUDENT_MONTHLY,
+  PER_STUDENT_ANNUAL,
+} from "@/lib/constants"
 import { cn } from "@/lib/utils"
+
+// First FREE_STUDENTS students are always free; billable students are charged
+// per head. Pricing constants are shared with the admin billing view.
+const FREE_STUDENTS = FREE_PLAN_LIMITS.student
 
 const plans = [
   {
-    name: "Free",
-    monthlyPrice: 0,
-    annualPrice: 0,
-    description: "Perfect for small academies just getting started.",
-    limits: "15 students · 2 batches · 1 coach",
+    name: "Starter",
+    priceLabel: () => "₹0",
+    priceSuffix: "forever",
+    description: "For new and small academies finding their feet.",
+    limits: `Up to ${FREE_STUDENTS} students · 2 batches · 1 coach`,
     cta: "Start free",
-    ctaHref: "/signup",
+    ctaHref: "/register",
     highlighted: false,
     features: [
-      "Up to 15 students",
+      `Up to ${FREE_STUDENTS} students`,
       "2 batches",
       "1 coach account",
-      "Fee tracking",
+      "Fee tracking & reminders",
       "Basic scheduling",
       "Email support",
     ],
   },
   {
-    name: "Pro",
-    monthlyPrice: 999,
-    annualPrice: 833,
-    description: "For growing academies that need more power.",
-    limits: "Unlimited students · coaches · batches",
+    name: "Growth",
+    priceLabel: (annual: boolean) => `₹${annual ? PER_STUDENT_ANNUAL : PER_STUDENT_MONTHLY}`,
+    priceSuffix: "/ student / mo",
+    description: "Pay only for the students you coach — pricing that scales with your academy.",
+    limits: `First ${FREE_STUDENTS} students free · then per active student`,
     cta: "Start free trial",
-    ctaHref: "/signup?plan=pro",
+    ctaHref: "/register?plan=growth",
     highlighted: true,
     badge: "Most popular",
     features: [
-      "Unlimited students",
-      "Unlimited batches",
-      "Unlimited coaches",
+      "Unlimited batches & coaches",
       "WhatsApp & SMS reminders",
-      "PDF receipts",
+      "PDF receipts & fee collection",
       "Advanced scheduling",
+      "Attendance & performance tracking",
       "Priority support",
     ],
   },
   {
-    name: "Enterprise",
-    monthlyPrice: null,
-    annualPrice: null,
-    description: "Custom plans for large academies and sports organisations.",
-    limits: "Custom limits + SLA + onboarding",
+    name: "Scale",
+    priceLabel: () => "Custom",
+    priceSuffix: "volume rate",
+    description: "For large academies and multi-branch sports organisations.",
+    limits: "300+ students · lower per-head rate",
     cta: "Contact us",
-    ctaHref: "mailto:hello@coachpro.in",
+    ctaHref: "mailto:vinothdevaraj14@gmail.com",
     highlighted: false,
     features: [
-      "Everything in Pro",
-      "Custom student limits",
-      "Dedicated onboarding",
-      "SLA guarantee",
+      "Everything in Growth",
+      "Discounted volume pricing",
+      "Multi-branch management",
+      "Dedicated onboarding & SLA",
       "Custom integrations",
       "White-label option",
     ],
@@ -76,10 +84,11 @@ export function Pricing() {
         {/* Section header */}
         <div className="mb-10 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Simple, transparent pricing
+            Simple, student-based pricing
           </h2>
           <p className="mt-3 text-lg text-muted-foreground">
-            Start free. Scale as you grow. No hidden fees.
+            Start free with your first {FREE_STUDENTS} students. After that, just ₹
+            {PER_STUDENT_MONTHLY} per active student — you only pay as you grow.
           </p>
 
           {/* Billing toggle */}
@@ -106,7 +115,7 @@ export function Pricing() {
             >
               Annual
               <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                2 months free
+                Save 20%
               </Badge>
             </button>
           </div>
@@ -118,7 +127,7 @@ export function Pricing() {
             <Card
               key={plan.name}
               className={cn(
-                "relative flex flex-col",
+                "relative flex flex-col overflow-visible",
                 plan.highlighted
                   ? "border-primary shadow-xl ring-2 ring-primary bg-background"
                   : "border-0 shadow-sm bg-background"
@@ -135,23 +144,12 @@ export function Pricing() {
                 <CardTitle className="text-lg font-semibold">{plan.name}</CardTitle>
                 <CardDescription className="text-sm">{plan.description}</CardDescription>
                 <div className="mt-2">
-                  {plan.monthlyPrice === null ? (
-                    <p className="text-3xl font-bold text-foreground">Custom</p>
-                  ) : plan.monthlyPrice === 0 ? (
-                    <p className="text-3xl font-bold text-foreground">₹0</p>
-                  ) : (
-                    <div>
-                      <p className="text-3xl font-bold text-foreground">
-                        ₹{annual ? plan.annualPrice?.toLocaleString("en-IN") : plan.monthlyPrice.toLocaleString("en-IN")}
-                        <span className="text-base font-normal text-muted-foreground">/mo</span>
-                      </p>
-                      {annual && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Billed annually (₹{((plan.annualPrice ?? 0) * 10).toLocaleString("en-IN")}/yr)
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  <p className="text-3xl font-bold text-foreground">
+                    {plan.priceLabel(annual)}
+                    <span className="ml-1 text-base font-normal text-muted-foreground">
+                      {plan.priceSuffix}
+                    </span>
+                  </p>
                   <p className="mt-1.5 text-xs text-muted-foreground">{plan.limits}</p>
                 </div>
               </CardHeader>

@@ -1,6 +1,6 @@
 # Module 2 — Academy Onboarding & Settings
 
-**Status:** `🔲 Pending`
+**Status:** `✅ Done`
 **Priority:** 2 of 8
 **Back to index:** [docs/README.md](../README.md)
 
@@ -30,7 +30,7 @@ Step 1 is required. Steps 2–4 are skippable.
 | 1 — Academy Profile | Yes | Name (pre-filled), category, address, contact email/mobile, logo upload, timezone |
 | 2 — Add First Coach | Skippable | Full name, email, mobile |
 | 3 — Create First Batch | Skippable | Name, days, time, venue, monthly fee |
-| 4 — Enrol First Student | Skippable | Name, DOB, guardian mobile, batch assignment |
+| 4 — Enrol First Student | Skippable | Name, DOB, guardian name, guardian mobile (direct `students` record — not an email invite; see Module 4 identity model) |
 
 On completion: set `institutions.onboarding_complete = true` → redirect to `/dashboard`.
 

@@ -5,7 +5,7 @@ import {
   saveAcademyProfile,
   addCoachInvite,
   saveWorkingHours,
-  addStudentInvite,
+  enrolFirstStudent,
   completeOnboarding,
   type ActionState,
 } from './actions'
@@ -109,14 +109,13 @@ export function OnboardingWizard({ institution }: { institution: WizardInstituti
   const [s1, a1, p1] = useActionState<ActionState, FormData>(saveAcademyProfile, {})
   const [s2, a2, p2] = useActionState<ActionState, FormData>(addCoachInvite, {})
   const [s3, a3, p3] = useActionState<ActionState, FormData>(saveWorkingHours, {})
-  const [s4, a4, p4] = useActionState<ActionState, FormData>(addStudentInvite, {})
+  const [s4, a4, p4] = useActionState<ActionState, FormData>(enrolFirstStudent, {})
 
-  useEffect(() => { if (s1.success) setStep(2) }, [s1.success])
-  useEffect(() => { if (s2.success) setStep(3) }, [s2.success])
-  useEffect(() => { if (s3.success) setStep(4) }, [s3.success])
+  useEffect(() => { if (s1.success) startTransition(() => setStep(2)) }, [s1.success])
+  useEffect(() => { if (s2.success) startTransition(() => setStep(3)) }, [s2.success])
+  useEffect(() => { if (s3.success) startTransition(() => setStep(4)) }, [s3.success])
   useEffect(() => {
     if (s4.success) startTransition(async () => { await completeOnboarding() })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s4.success])
 
   function handleFinish() {
@@ -353,24 +352,50 @@ export function OnboardingWizard({ institution }: { institution: WizardInstituti
         {step === 4 && (
           <Card>
             <CardHeader>
-              <CardTitle>Invite Your First Student</CardTitle>
+              <CardTitle>Enrol Your First Student</CardTitle>
               <CardDescription>
-                Add a student&apos;s email so they can sign up at{' '}
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">/signup</code>. You can add more
-                from the Members page later.
+                Students are records you manage — no login or email needed. Add the basics now; you can
+                fill in more details (sports, fees, jersey) from the Students page later.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form action={a4} className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="s_email">Student Email</Label>
-                  <Input
-                    id="s_email"
-                    name="email"
-                    type="email"
-                    placeholder="student@example.com"
-                    required
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="s_full_name">Student name</Label>
+                    <Input
+                      id="s_full_name"
+                      name="full_name"
+                      placeholder="Full name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="s_dob">Date of birth</Label>
+                    <Input id="s_dob" name="dob" type="date" required />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="s_guardian_name">Guardian name</Label>
+                    <Input
+                      id="s_guardian_name"
+                      name="guardian_name"
+                      placeholder="Parent / guardian"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="s_guardian_mobile">Guardian mobile</Label>
+                    <Input
+                      id="s_guardian_mobile"
+                      name="guardian_mobile"
+                      type="tel"
+                      placeholder="+919876543210"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <FieldError message={s4.error} />
@@ -380,7 +405,7 @@ export function OnboardingWizard({ institution }: { institution: WizardInstituti
                     Skip &amp; finish setup
                   </Button>
                   <Button type="submit" disabled={p4}>
-                    {p4 ? 'Inviting…' : 'Invite Student'}
+                    {p4 ? 'Enrolling…' : 'Enrol Student'}
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>

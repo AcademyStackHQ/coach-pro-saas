@@ -19,19 +19,21 @@ const steps = [
   },
 ]
 
-export function HowItWorks() {
+export function HowItWorks({ showHeader = true }: { showHeader?: boolean } = {}) {
   return (
     <section className="bg-background py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
-        <div className="mb-14 text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Up and running in minutes
-          </h2>
-          <p className="mt-3 text-lg text-muted-foreground">
-            No technical setup. No IT team. Just you and your academy.
-          </p>
-        </div>
+        {showHeader && (
+          <div className="mb-14 text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Up and running in minutes
+            </h2>
+            <p className="mt-3 text-lg text-muted-foreground">
+              No technical setup. No IT team. Just you and your academy.
+            </p>
+          </div>
+        )}
 
         {/* Steps */}
         <div className="relative grid grid-cols-1 gap-8 sm:grid-cols-3">
