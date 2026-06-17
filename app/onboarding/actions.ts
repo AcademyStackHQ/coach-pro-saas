@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createClient } from '@/lib/server'
+import type { Json } from '@/lib/supabase/types'
+import { planGuard, PlanLimitError } from '@/lib/planGuard'
 
 export type ActionState = { success?: boolean; error?: string }
 
@@ -40,8 +42,7 @@ export async function saveAcademyProfile(
   const supabase = await createClient()
   const { error } = await supabase
     .from('institutions')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ name, category, address, contact_email, contact_mobile, timezone } as any)
+    .update({ name, category, address, contact_email, contact_mobile, timezone })
     .eq('id', institutionId)
 
   if (error) return { error: 'Failed to save profile. Please try again.' }
@@ -91,9 +92,9 @@ export async function saveWorkingHours(
   const raw = formData.get('working_hours') as string
   if (!raw) return { error: 'No hours data provided.' }
 
-  let workingHours: unknown
+  let workingHours: Json
   try {
-    workingHours = JSON.parse(raw)
+    workingHours = JSON.parse(raw) as Json
   } catch {
     return { error: 'Invalid hours format.' }
   }
@@ -101,43 +102,62 @@ export async function saveWorkingHours(
   const supabase = await createClient()
   const { error } = await supabase
     .from('institutions')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ working_hours: workingHours as any })
+    .update({ working_hours: workingHours })
     .eq('id', institutionId)
 
   if (error) return { error: 'Failed to save working hours. Please try again.' }
   return { success: true }
 }
 
-// Step 4 — optional: invite first student
-export async function addStudentInvite(
+// Step 4 — optional: enrol the first student.
+// Students are academy-owned RECORDS, not logins (under-14 kids have no email,
+// siblings share a guardian email) — so this is a direct `students` insert, NOT
+// the allowlist/signup flow. See Module 4 / the student identity model.
+export async function enrolFirstStudent(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
   const institutionId = await getInstitutionId()
   if (!institutionId) return { error: 'No active institution.' }
 
-  const email = (formData.get('email') as string)?.trim().toLowerCase()
-  if (!email) return { error: 'Email is required.' }
-  if (!z.string().email().safeParse(email).success) return { error: 'Invalid email address.' }
+  const fullName = (formData.get('full_name') as string)?.trim() ?? ''
+  const dob = (formData.get('dob') as string)?.trim() ?? ''
+  const guardianName = (formData.get('guardian_name') as string)?.trim() ?? ''
+  const guardianMobile = (formData.get('guardian_mobile') as string)?.trim() ?? ''
+
+  const parsed = z
+    .object({
+      full_name: z.string().min(1, 'Student name is required.'),
+      dob: z.string().min(1, 'Date of birth is required.'),
+      guardian_name: z.string().min(1, 'Guardian name is required.'),
+      guardian_mobile: z.string().regex(/^\+?\d{8,15}$/, 'Enter a valid mobile number.'),
+    })
+    .safeParse({
+      full_name: fullName,
+      dob,
+      guardian_name: guardianName,
+      guardian_mobile: guardianMobile,
+    })
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
-  const { data: claimsData } = await supabase.auth.getClaims()
-  const userId = claimsData?.claims?.sub
-  if (!userId) return { error: 'Unauthorized.' }
 
-  const { error } = await supabase.rpc('link_user_to_institution', {
-    p_institution_id: institutionId,
-    p_email: email,
-    p_role: 'student',
-    p_added_by: userId,
+  try {
+    await planGuard(supabase, institutionId, 'student')
+  } catch (e) {
+    if (e instanceof PlanLimitError) return { error: e.message }
+    return { error: 'Could not verify plan limits. Please try again.' }
+  }
+
+  const { error } = await supabase.from('students').insert({
+    institution_id: institutionId,
+    full_name: fullName,
+    dob,
+    guardian_name: guardianName,
+    guardian_mobile: guardianMobile,
   })
 
-  if (error) {
-    if (error.message.includes('Not authorised'))
-      return { error: 'You are not an admin of this institution.' }
-    return { error: 'Failed to invite student. Please try again.' }
-  }
+  if (error) return { error: 'Failed to enrol student. Please try again.' }
   return { success: true }
 }
 

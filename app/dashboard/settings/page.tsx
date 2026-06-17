@@ -19,16 +19,16 @@ export default async function SettingsPage() {
     await Promise.all([
       supabase
         .from('institutions')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .select('id, name, slug, timezone, working_hours, plan, sms_credits, category, address, contact_email, contact_mobile, fee_config' as any)
+        .select('id, name, slug, timezone, working_hours, plan, sms_credits, category, address, contact_email, contact_mobile, fee_config')
         .eq('id', institutionId)
         .single(),
 
+      // Students are academy-owned records (the `students` table), not members —
+      // count them there so the usage figure matches planGuard.
       supabase
-        .from('institution_members')
+        .from('students')
         .select('*', { count: 'exact', head: true })
         .eq('institution_id', institutionId)
-        .eq('role', 'student')
         .eq('status', 'active'),
 
       supabase
@@ -42,6 +42,8 @@ export default async function SettingsPage() {
   if (!institution) redirect('/login')
 
   const data: SettingsData = {
+    // working_hours / fee_config are `Json` in the generated types; the view
+    // model narrows them to objects at this boundary.
     ...(institution as unknown as SettingsData),
     student_count: studentCount ?? 0,
     coach_count: coachCount ?? 0,

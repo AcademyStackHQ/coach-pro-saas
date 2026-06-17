@@ -67,13 +67,21 @@ coach-pro-saas/
 ├── lib/
 │   ├── client.ts                 # Supabase browser client
 │   ├── server.ts                 # Supabase server client (SSR)
-│   ├── middleware.ts             # updateSession utility
+│   ├── requireRole.ts            # Per-page role guard (reads active_role cookie)
+│   ├── planGuard.ts              # Free-tier plan limit enforcement
+│   ├── constants.ts              # Categories, timezones, availability/colour, plan limits
 │   └── supabase/types.ts        # Generated DB types
 │
 ├── supabase/
 │   └── migrations/               # SQL migrations (apply in order)
-│       ├── 001_foundation.sql
-│       └── 002_email_allowlist_check.sql
+│       ├── 001_foundation.sql              # institutions, profiles, members, allowlist
+│       ├── 002_email_allowlist_check.sql
+│       ├── 003_case_insensitive_email_linking.sql
+│       ├── 003_institution_profile.sql     # category, address, contact, fee_config
+│       ├── 004_institution_name_check.sql
+│       ├── 005_coaches.sql                 # coaches extension table + RLS
+│       ├── 006_students.sql                # students records table + RLS
+│       └── 007_student_fees.sql            # optional per-student monthly_fee + deposit (paise)
 │
 ├── proxy.ts                      # Auth guard + routing (replaces middleware.ts)
 │
@@ -95,9 +103,9 @@ coach-pro-saas/
 |---|---|---|
 | 0 | Marketing Site | 🚧 In Progress |
 | 1 | Foundation & Auth | 🚧 In Progress |
-| 2 | Academy Onboarding & Settings | 🔲 Pending |
-| 3 | Coach Management | 🔲 Pending |
-| 4 | Student Management | 🔲 Pending |
+| 2 | Academy Onboarding & Settings | ✅ Done |
+| 3 | Coach Management | ✅ Done |
+| 4 | Student Management | 🚧 In Progress |
 | 5 | Batch Management | 🔲 Pending |
 | 6 | Calendar & Scheduling | 🔲 Pending |
 | 7 | Fee Management | 🔲 Pending |

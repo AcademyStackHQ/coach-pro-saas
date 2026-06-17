@@ -18,17 +18,16 @@ export default async function OnboardingPage() {
   const { data: claimsData } = await supabase.auth.getClaims()
   if (!claimsData?.claims?.sub) redirect('/login')
 
-  // Select all profile fields including the new columns from migration 003.
-  // Cast to WizardInstitution because the generated types predate that migration.
   const { data } = await supabase
     .from('institutions')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .select('id, name, onboarding_complete, timezone, working_hours, category, address, contact_email, contact_mobile' as any)
+    .select('id, name, onboarding_complete, timezone, working_hours, category, address, contact_email, contact_mobile')
     .eq('id', institutionId)
     .single()
 
   if (!data) redirect('/login')
 
+  // working_hours is `Json` in the generated types; the wizard view model
+  // narrows it to an object at this boundary.
   const institution = data as unknown as WizardInstitution & { onboarding_complete: boolean }
 
   // Already onboarded — send them to the dashboard

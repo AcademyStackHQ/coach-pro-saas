@@ -140,4 +140,10 @@
   h1, h2, h3, h4 {
     @apply font-heading;
   }
+  /* Hide the browser's native password reveal/clear controls (Edge/IE) so they
+     don't overlap our custom show/hide toggle. */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
 }

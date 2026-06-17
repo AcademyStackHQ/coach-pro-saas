@@ -153,12 +153,12 @@ export function Hero() {
               >
                 Start free →
               </Link>
-              <Link
-                href="/demo"
+              <a
+                href="mailto:vinothdevaraj14@gmail.com?subject=CoachPro%20demo%20request"
                 className={cn(buttonVariants({ variant: "outline", size: "lg" }), "px-8")}
               >
                 Book a demo
-              </Link>
+              </a>
             </div>
 
             {/* Trust row */}

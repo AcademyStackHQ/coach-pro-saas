@@ -41,23 +41,25 @@ const features = [
     icon: "🔒",
     title: "Secure & Multi-tenant",
     description:
-      "Every academy's data is fully isolated — GDPR-ready with role-based access control.",
+      "Every academy's data is fully isolated — DPDP-compliant with role-based access control.",
   },
 ]
 
-export function Features() {
+export function Features({ showHeader = true }: { showHeader?: boolean } = {}) {
   return (
     <section className="bg-muted/40 py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Everything your academy needs
-          </h2>
-          <p className="mt-3 text-lg text-muted-foreground">
-            One platform. Zero spreadsheets. Full control.
-          </p>
-        </div>
+        {showHeader && (
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Everything your academy needs
+            </h2>
+            <p className="mt-3 text-lg text-muted-foreground">
+              One platform. Zero spreadsheets. Full control.
+            </p>
+          </div>
+        )}
 
         {/* 6-card grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

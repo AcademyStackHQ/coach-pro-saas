@@ -37,13 +37,25 @@ export async function planGuard(
   // Batch table is introduced in Module 5; guard wired up then.
   if (resource === 'batch') return
 
-  const role = resource === 'student' ? 'student' : 'coach'
+  // Students are academy-owned records (the `students` table), NOT
+  // institution_members — count them there so the Free limit actually fires.
+  if (resource === 'student') {
+    const { count } = await supabase
+      .from('students')
+      .select('*', { count: 'exact', head: true })
+      .eq('institution_id', institutionId)
+      .eq('status', 'active')
 
+    if ((count ?? 0) >= limit) throw new PlanLimitError('student', limit)
+    return
+  }
+
+  // Coaches are members with role='coach'.
   const { count } = await supabase
     .from('institution_members')
     .select('*', { count: 'exact', head: true })
     .eq('institution_id', institutionId)
-    .eq('role', role)
+    .eq('role', 'coach')
     .eq('status', 'active')
 
   if ((count ?? 0) >= limit) throw new PlanLimitError(resource, limit)

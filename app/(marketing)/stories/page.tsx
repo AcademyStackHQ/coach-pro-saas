@@ -2,9 +2,9 @@ import type { Metadata } from "next"
 import { Stories } from "@/components/marketing/Stories"
 
 export const metadata: Metadata = {
-  title: "Stories",
+  title: "Use cases",
   description:
-    "See how sports academies across India use CoachPro to manage students, fees, and schedules.",
+    "See how different kinds of academies and institutes use CoachPro to manage students, fees, and schedules.",
   alternates: { canonical: "https://coachpro.in/stories" },
 }
 
@@ -13,13 +13,13 @@ export default function StoriesPage() {
     <div className="py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center mb-4">
         <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-          Trusted by academies across India
+          Built for every kind of academy
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
-          Real stories from coaches who made the switch.
+          From cricket grounds to music schools — see how CoachPro fits.
         </p>
       </div>
-      <Stories />
+      <Stories showHeader={false} />
     </div>
   )
 }

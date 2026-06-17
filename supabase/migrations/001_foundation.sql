@@ -223,6 +223,7 @@ DECLARE
   v_signup_type      TEXT;
   v_institution_name TEXT;
   v_institution_slug TEXT;
+  v_category         TEXT;
   v_new_institution  UUID;
   v_allowed          RECORD;
 BEGIN
@@ -241,9 +242,18 @@ BEGIN
 
     v_institution_name := NEW.raw_user_meta_data->>'institution_name';
     v_institution_slug := NEW.raw_user_meta_data->>'institution_slug';
+    v_category         := NEW.raw_user_meta_data->>'category';
 
-    INSERT INTO public.institutions (name, slug)
-    VALUES (v_institution_name, v_institution_slug)
+    -- category/contact_* columns are added in migration 003; this body
+    -- only runs at signup time, by which point they exist.
+    INSERT INTO public.institutions (name, slug, category, contact_email, contact_mobile)
+    VALUES (
+      v_institution_name,
+      v_institution_slug,
+      v_category,
+      NEW.email,
+      NEW.raw_user_meta_data->>'mobile'
+    )
     RETURNING id INTO v_new_institution;
 
     INSERT INTO public.institution_members (institution_id, user_id, role)

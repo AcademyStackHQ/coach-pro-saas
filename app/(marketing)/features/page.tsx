@@ -19,7 +19,7 @@ export default function FeaturesPage() {
           Built specifically for sports coaching academies in India.
         </p>
       </div>
-      <Features />
+      <Features showHeader={false} />
     </div>
   )
 }

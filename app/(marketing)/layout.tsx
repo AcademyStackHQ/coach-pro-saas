@@ -16,14 +16,12 @@ export const metadata: Metadata = {
       "Cloud platform for sports academies. Enrolments, scheduling, fees, and SMS — all in one place.",
     url: "https://coachpro.in",
     siteName: "CoachPro",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "CoachPro — Sports Academy Management",
-    description: "Cloud platform for coaching academies.",
-    images: ["/og-image.png"],
+    title: "CoachPro — Academy Management",
+    description: "Cloud platform for coaching academies and institutes.",
   },
 }
 
