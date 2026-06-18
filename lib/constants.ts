@@ -106,7 +106,7 @@ export const GENDERS = [
   { value: 'other',  label: 'Other' },
 ] as const
 
-export const JERSEY_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
+export const UNIFORM_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 
 // Age threshold above which a student may have their own login (14+ invite
 // path — deferred). A product policy enforced in the UI/server action, never
@@ -117,3 +117,100 @@ export const STUDENT_LOGIN_AGE = 14
 // is globally unique, so `<code>@<domain>` is a unique Supabase Auth identity.
 // This mailbox is never sent to — swap for an owned domain anytime.
 export const STUDENT_LOGIN_EMAIL_DOMAIN = 'students.coachpro.local'
+
+// ----------------------------------------------------------------------------
+// Batches (Module 5) — scheduled training groups.
+// days_of_week is stored as INT[] using JS Date.getDay() indices (0 = Sun …
+// 6 = Sat) so the calendar can compute occurrences directly. This list is
+// Mon-first for the day-picker UI; `num` is the stored value.
+// ----------------------------------------------------------------------------
+
+export const DAYS_OF_WEEK = [
+  { num: 1, short: 'M', label: 'Mon' },
+  { num: 2, short: 'T', label: 'Tue' },
+  { num: 3, short: 'W', label: 'Wed' },
+  { num: 4, short: 'T', label: 'Thu' },
+  { num: 5, short: 'F', label: 'Fri' },
+  { num: 6, short: 'S', label: 'Sat' },
+  { num: 0, short: 'S', label: 'Sun' },
+] as const
+
+// Fraction of capacity at/above which a batch is "Almost Full".
+export const CAPACITY_ALMOST_FULL = 0.8
+
+// Capacity badge — Green (Available) < 80%, Amber (Almost Full) ≥ 80%,
+// Red (Full) = capacity. Mirrors the status-badge shape used across the app.
+export function capacityBadge(
+  enrolled: number,
+  capacity: number
+): { label: string; className: string } {
+  if (capacity > 0 && enrolled >= capacity)
+    return { label: 'Full', className: 'bg-red-50 text-red-700' }
+  if (capacity > 0 && enrolled / capacity >= CAPACITY_ALMOST_FULL)
+    return { label: 'Almost Full', className: 'bg-amber-50 text-amber-700' }
+  return { label: 'Available', className: 'bg-green-50 text-green-700' }
+}
+
+// ----------------------------------------------------------------------------
+// A batch's schedule is per-day: each training day carries its own start/end
+// time (Fri 17:00–18:30 but Sat/Sun 07:00–08:30). Stored as a JSONB array of
+// these slots on `batches.schedule`. `day` is a JS Date.getDay() index.
+// ----------------------------------------------------------------------------
+
+export type BatchSlot = { day: number; start: string; end: string }
+
+const hhmm = (t: string) => (t ?? '').slice(0, 5)
+
+// Full label ("Mon") for a JS day index.
+export function dayLabel(num: number): string {
+  return DAYS_OF_WEEK.find((d) => d.num === num)?.label ?? ''
+}
+
+// Order an arbitrary set of JS day indices Mon-first (matching DAYS_OF_WEEK).
+function orderDaysMonFirst(days: number[]): number[] {
+  return DAYS_OF_WEEK.filter((d) => days.includes(d.num)).map((d) => d.num)
+}
+
+// Coerce a stored JSONB schedule (typed as `Json`) into clean BatchSlot[],
+// dropping anything malformed. Used on every read (pages + conflict checks).
+export function parseSchedule(value: unknown): BatchSlot[] {
+  if (!Array.isArray(value)) return []
+  const out: BatchSlot[] = []
+  for (const v of value) {
+    if (!v || typeof v !== 'object') continue
+    const r = v as Record<string, unknown>
+    const day = Number(r.day)
+    const start = typeof r.start === 'string' ? r.start : ''
+    const end = typeof r.end === 'string' ? r.end : ''
+    if (Number.isInteger(day) && day >= 0 && day <= 6 && start && end)
+      out.push({ day, start, end })
+  }
+  return out
+}
+
+// Group slots that share the same start+end so a multi-day batch reads
+// compactly. Groups (and the days inside them) are ordered Mon-first.
+export function groupSchedule(
+  slots: BatchSlot[]
+): { days: number[]; start: string; end: string }[] {
+  const byTime = new Map<string, { days: number[]; start: string; end: string }>()
+  for (const s of slots) {
+    const key = `${s.start}-${s.end}`
+    const g = byTime.get(key)
+    if (g) g.days.push(s.day)
+    else byTime.set(key, { days: [s.day], start: s.start, end: s.end })
+  }
+  const pos = (num: number) => DAYS_OF_WEEK.findIndex((d) => d.num === num)
+  return Array.from(byTime.values())
+    .map((g) => ({ ...g, days: orderDaysMonFirst(g.days) }))
+    .sort((a, b) => pos(a.days[0]) - pos(b.days[0]))
+}
+
+// One-line schedule summary for cards / lists, grouping days with equal times:
+// "Fri · 17:00–18:30  •  Sat, Sun · 07:00–08:30".
+export function batchScheduleLabel(slots: BatchSlot[]): string {
+  if (!slots.length) return 'No days set'
+  return groupSchedule(slots)
+    .map((g) => `${g.days.map(dayLabel).join(', ')} · ${hhmm(g.start)}–${hhmm(g.end)}`)
+    .join('  •  ')
+}

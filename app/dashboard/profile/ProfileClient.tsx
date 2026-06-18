@@ -87,21 +87,21 @@ export function ProfileClient({
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="jersey_name">Name on jersey</Label>
+                <Label htmlFor="uniform_name">Name on uniform</Label>
                 <Input
-                  id="jersey_name"
-                  name="jersey_name"
-                  defaultValue={student.jersey_name ?? ''}
+                  id="uniform_name"
+                  name="uniform_name"
+                  defaultValue={student.uniform_name ?? ''}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="jersey_number">Jersey number</Label>
+                <Label htmlFor="uniform_number">Uniform number</Label>
                 <Input
-                  id="jersey_number"
-                  name="jersey_number"
+                  id="uniform_number"
+                  name="uniform_number"
                   type="number"
                   min={0}
-                  defaultValue={student.jersey_number ?? ''}
+                  defaultValue={student.uniform_number ?? ''}
                 />
               </div>
             </div>
@@ -143,8 +143,8 @@ export function ProfileClient({
               value={formatDate(student.enrolment_date)}
             />
             <ReadOnly
-              label="Sports"
-              value={student.sports.length ? student.sports.join(', ') : '—'}
+              label="Programs"
+              value={student.programs.length ? student.programs.join(', ') : '—'}
             />
           </div>
           <p className="mt-4 text-xs text-muted-foreground">

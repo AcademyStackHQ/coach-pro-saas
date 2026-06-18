@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 /**
- * Controlled sports multi-select that emits one hidden `<input name="sports">`
- * per selected sport, so it posts cleanly to a server action via FormData
- * (read with `formData.getAll('sports')`). Suggestions come from the
- * institution's configured sports; admins can add custom ones.
+ * Controlled programs multi-select that emits one hidden `<input name="programs">`
+ * per selected program, so it posts cleanly to a server action via FormData
+ * (read with `formData.getAll('programs')`). Suggestions come from the
+ * institution's configured programs; admins can add custom ones.
  */
-export function SportsField({
+export function ProgramsField({
   initial = [],
   suggestions = [],
 }: {
@@ -21,9 +21,9 @@ export function SportsField({
   const [selected, setSelected] = useState<string[]>(initial)
   const [custom, setCustom] = useState('')
 
-  function toggle(sport: string) {
+  function toggle(program: string) {
     setSelected((prev) =>
-      prev.includes(sport) ? prev.filter((s) => s !== sport) : [...prev, sport]
+      prev.includes(program) ? prev.filter((s) => s !== program) : [...prev, program]
     )
   }
 
@@ -38,13 +38,13 @@ export function SportsField({
   return (
     <div className="space-y-2">
       {selected.map((s) => (
-        <input key={s} type="hidden" name="sports" value={s} />
+        <input key={s} type="hidden" name="programs" value={s} />
       ))}
 
       <div className="flex flex-wrap gap-2">
         {options.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            No sports configured yet — add one below.
+            No programs configured yet — add one below.
           </p>
         )}
         {options.map((s) => (
@@ -68,7 +68,7 @@ export function SportsField({
         <Input
           value={custom}
           onChange={(e) => setCustom(e.target.value)}
-          placeholder="Add a sport"
+          placeholder="Add a program"
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault()

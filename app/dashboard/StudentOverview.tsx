@@ -15,7 +15,7 @@ function formatDate(value: string | null): string {
   })
 }
 
-function jerseyLine(
+function uniformLine(
   size: string | null,
   number: number | null,
   name: string | null
@@ -52,16 +52,16 @@ export async function StudentOverview() {
       icon: CalendarDays,
     },
     {
-      label: 'Sports',
-      value: student.sports.length ? student.sports.join(', ') : 'None yet',
+      label: 'Programs',
+      value: student.programs.length ? student.programs.join(', ') : 'None yet',
       icon: Trophy,
     },
     {
-      label: 'Jersey',
-      value: jerseyLine(
-        student.jersey_size,
-        student.jersey_number,
-        student.jersey_name
+      label: 'Uniform',
+      value: uniformLine(
+        student.uniform_size,
+        student.uniform_number,
+        student.uniform_name
       ),
       icon: Shirt,
     },

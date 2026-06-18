@@ -4,7 +4,7 @@ import { HowItWorks } from "@/components/marketing/HowItWorks"
 export const metadata: Metadata = {
   title: "How it works",
   description:
-    "Get your sports academy running on CoachPro in three simple steps. No technical setup required.",
+    "Get your academy running on CoachPro in three simple steps. No technical setup required.",
   alternates: { canonical: "https://coachpro.in/how-it-works" },
 }
 

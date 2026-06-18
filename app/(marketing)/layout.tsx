@@ -4,16 +4,16 @@ import { Footer } from "@/components/marketing/Footer"
 
 export const metadata: Metadata = {
   title: {
-    default: "CoachPro — Sports Academy Management Software",
+    default: "CoachPro — Academy Management Software",
     template: "%s | CoachPro",
   },
   description:
-    "Manage student enrolments, batch schedules, fee collection, and parent communication for your sports coaching academy. Free to start.",
-  keywords: ["sports academy software", "coaching management", "student fee management India"],
+    "Manage student enrolments, batch schedules, fee collection, and parent communication for your coaching & teaching academy. Free to start.",
+  keywords: ["academy management software", "coaching management", "student fee management India"],
   openGraph: {
     title: "CoachPro — Run your coaching academy from one place",
     description:
-      "Cloud platform for sports academies. Enrolments, scheduling, fees, and SMS — all in one place.",
+      "Cloud platform for coaching & teaching academies. Enrolments, scheduling, fees, and SMS — all in one place.",
     url: "https://coachpro.in",
     siteName: "CoachPro",
     type: "website",
@@ -48,7 +48,7 @@ export default function MarketingLayout({
               description: "Free plan available",
             },
             description:
-              "Cloud platform for sports coaching academies to manage students, schedules, fees, and communications.",
+              "Cloud platform for coaching & teaching academies to manage students, schedules, fees, and communications.",
           }),
         }}
       />

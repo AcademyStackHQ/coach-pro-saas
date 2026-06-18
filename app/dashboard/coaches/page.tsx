@@ -5,7 +5,7 @@ import { CoachesClient, type CoachRow } from './CoachesClient'
 
 export const metadata = { title: 'Coaches — CoachPro' }
 
-type CoachExt = { user_id: string; sports: string[] | null; color: string | null }
+type CoachExt = { user_id: string; programs: string[] | null; color: string | null }
 
 export default async function CoachesPage() {
   await requireRole('admin')
@@ -24,7 +24,7 @@ export default async function CoachesPage() {
 
     supabase
       .from('coaches')
-      .select('user_id, sports, color')
+      .select('user_id, programs, color')
       .eq('institution_id', institutionId),
 
     supabase
@@ -47,7 +47,7 @@ export default async function CoachesPage() {
       name: m.profiles?.full_name ?? m.profiles?.email ?? 'Unknown',
       email: m.profiles?.email ?? '',
       avatar_url: m.profiles?.avatar_url ?? null,
-      sports: ext?.sports ?? [],
+      programs: ext?.programs ?? [],
       color: ext?.color ?? null,
     }
   })
@@ -58,7 +58,7 @@ export default async function CoachesPage() {
     name: p.email,
     email: p.email,
     avatar_url: null,
-    sports: [],
+    programs: [],
     color: null,
   }))
 

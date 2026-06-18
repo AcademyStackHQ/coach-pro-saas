@@ -30,11 +30,11 @@
 | `name` | `TEXT NOT NULL UNIQUE` | Globally unique institution name |
 | `slug` | `TEXT UNIQUE NOT NULL` | URL-friendly name, e.g. `tigers-academy` |
 | `logo_url` | `TEXT` | Supabase Storage public URL |
-| `category` | `TEXT` | Academy type (e.g. `cricket`, `multi-sport`) |
+| `category` | `TEXT` | Academy type (e.g. `cricket`, `multi-activity`) |
 | `address` | `TEXT` | Full address |
 | `contact_email` | `TEXT` | Public contact email |
 | `contact_mobile` | `TEXT` | Public contact mobile (E.164) |
-| `sports` | `TEXT[]` | e.g. `['cricket', 'football']` |
+| `programs` | `TEXT[]` | e.g. `['cricket', 'football']` |
 | `timezone` | `TEXT DEFAULT 'Asia/Kolkata'` | |
 | `plan` | `TEXT DEFAULT 'free'` | `free` \| `pro` \| `enterprise` |
 | `sms_credits` | `INT DEFAULT 0` | |

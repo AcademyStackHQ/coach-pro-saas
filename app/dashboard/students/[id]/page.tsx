@@ -19,22 +19,39 @@ export default async function StudentPage({
 
   const supabase = await createClient()
 
-  const [{ data: student }, { data: institution }] = await Promise.all([
-    supabase
-      .from('students')
-      .select('*')
-      .eq('id', id)
-      .eq('institution_id', institutionId)
-      .maybeSingle(),
+  const [{ data: student }, { data: institution }, { data: enrolments }] =
+    await Promise.all([
+      supabase
+        .from('students')
+        .select('*')
+        .eq('id', id)
+        .eq('institution_id', institutionId)
+        .maybeSingle(),
 
-    supabase
-      .from('institutions')
-      .select('sports')
-      .eq('id', institutionId)
-      .single(),
-  ])
+      supabase
+        .from('institutions')
+        .select('programs')
+        .eq('id', institutionId)
+        .single(),
+
+      supabase
+        .from('batch_students')
+        .select('id, status, batches(id, name, program)')
+        .eq('student_id', id)
+        .neq('status', 'dropped')
+        .order('enrolled_at', { ascending: true }),
+    ])
 
   if (!student) notFound()
+
+  const batches: StudentDetailData['batches'] = (enrolments ?? [])
+    .filter((e) => e.batches)
+    .map((e) => ({
+      id: e.batches!.id,
+      name: e.batches!.name,
+      program: e.batches!.program,
+      status: e.status as 'active' | 'waitlisted',
+    }))
 
   const data: StudentDetailData = {
     id: student.id,
@@ -46,17 +63,18 @@ export default async function StudentPage({
     student_code: student.student_code,
     user_id: student.user_id,
     enrolment_date: student.enrolment_date,
-    sports: student.sports ?? [],
+    programs: student.programs ?? [],
     parent_name: student.parent_name,
     parent_mobile: student.parent_mobile,
     parent_email: student.parent_email,
     sms_opt_in: student.sms_opt_in ?? true,
-    jersey_size: student.jersey_size,
-    jersey_number: student.jersey_number,
-    jersey_name: student.jersey_name,
+    uniform_size: student.uniform_size,
+    uniform_number: student.uniform_number,
+    uniform_name: student.uniform_name,
     monthly_fee: student.monthly_fee,
     deposit_amount: student.deposit_amount,
-    institutionSports: institution?.sports ?? [],
+    institutionPrograms: institution?.programs ?? [],
+    batches,
   }
 
   return <StudentDetail data={data} />

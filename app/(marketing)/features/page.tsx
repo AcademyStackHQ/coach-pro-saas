@@ -4,7 +4,7 @@ import { Features } from "@/components/marketing/Features"
 export const metadata: Metadata = {
   title: "Features",
   description:
-    "Everything your sports academy needs — student management, smart scheduling, fee collection, SMS reminders, and more.",
+    "Everything your academy needs — student management, smart scheduling, fee collection, SMS reminders, and more.",
   alternates: { canonical: "https://coachpro.in/features" },
 }
 
@@ -16,7 +16,7 @@ export default function FeaturesPage() {
           Everything your academy needs
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
-          Built specifically for sports coaching academies in India.
+          Built specifically for coaching & teaching academies in India.
         </p>
       </div>
       <Features showHeader={false} />

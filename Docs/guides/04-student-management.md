@@ -8,7 +8,7 @@
 
 ## What This Module Delivers
 
-- Admin student CRUD as **academy-owned records** (personal, guardian, jersey details)
+- Admin student CRUD as **academy-owned records** (personal, guardian, uniform details)
 - Soft duplicate detection on create (never a hard fail)
 - Soft-deactivate (status flip), never hard delete
 - Search + status filtering; a per-student detail view
@@ -116,8 +116,8 @@ Built on Supabase Auth — **no custom auth**. The mechanism:
 
 `students` keyed on `institution_id` (mirrors `002_coaches.sql`). Key columns: `full_name`,
 `calling_name`, `dob`, `gender`, `parent_name`, `parent_mobile`, `parent_email` (**no unique
-constraint**), `sports TEXT[]`, `enrolment_date`, `status` (`active`/`inactive`), `student_code`,
-jersey fields, `monthly_fee`, `deposit_amount` (paise), `sms_opt_in`, and the two nullable login FKs
+constraint**), `programs TEXT[]`, `enrolment_date`, `status` (`active`/`inactive`), `student_code`,
+uniform fields, `monthly_fee`, `deposit_amount` (paise), `sms_opt_in`, and the two nullable login FKs
 (`user_id`, `parent_user_id`).
 
 The two optional per-student fee fields — `monthly_fee` and `deposit_amount` (one-time advance /
@@ -178,7 +178,7 @@ Enabling a student login inserts a `role='student'` member row, but because the 
 | Action | Purpose |
 |---|---|
 | `createStudent(prev, fd)` | Validate required fields (zod); soft dup-check on `(institution_id, lower(full_name), dob)` → returns `{ duplicate, existingId }` unless `confirm='1'`; `planGuard('student')` → **auto-assign `student_code` via `next_student_code()`** → insert. Returns the assigned code. |
-| `updateStudent(prev, fd)` | Patch one student by `id` + institution. A hidden `section` field (`profile`/`guardian`/`jersey`/`fees`) scopes which columns each tab writes. **`student_code` is no longer hand-edited** (it's the login handle). |
+| `updateStudent(prev, fd)` | Patch one student by `id` + institution. A hidden `section` field (`profile`/`guardian`/`uniform`/`fees`) scopes which columns each tab writes. **`student_code` is no longer hand-edited** (it's the login handle). |
 | `deactivateStudent(fd)` / `reactivateStudent(fd)` | Toggle `students.status` (soft-delete; row kept). |
 | `enableStudentLogin(prev, fd)` | **Admin-only.** Create the student's Supabase auth user (synthetic email + password) via the service-role client, grant a `role='student'` member row, and set `students.user_id`. |
 | `resetStudentPassword(prev, fd)` | **Admin-only.** `auth.admin.updateUserById` to set a new password for a student that already has a login. |
@@ -195,19 +195,19 @@ Enabling a student login inserts a `role='student'` member row, but because the 
 
 ### `/dashboard/students/[id]` — detail (`page.tsx` + `StudentDetail.tsx`)
 - `requireRole('admin')`. Native button tabs (Tabs primitive not installed):
-  1. **Profile** — name, calling name, dob, gender, enrolment date, sports. **Student code is read-only** (auto-assigned login handle).
+  1. **Profile** — name, calling name, dob, gender, enrolment date, programs. **Student code is read-only** (auto-assigned login handle).
   2. **Parent** — name, mobile, email, `sms_opt_in` toggle.
   3. **Login** — shows the student code + login status; **Enable login** (set password) when none exists, else **Reset password**. Opt-in, any age.
-  4. **Jersey** — size, number, name.
+  4. **Uniform** — size, number, name.
   5. **Fees** — monthly fee + advance/deposit (₹ inputs → stored in paise); note that the full ledger is Module 7.
-  6. **Batches** — placeholder (Module 5).
+  6. **Batches** — the batches this student is enrolled in (name, program, status), each linking to `/dashboard/batches/[id]` (Module 5). Empty-state points to enrolling from a batch's Students tab.
 
 The **Add Student** sheet also has an optional "Fees" section so monthly fee + deposit can be set at
 enrolment time.
 - **Deactivate / Reactivate** button toggles status.
 
-Sports use the shared `components/dashboard/SportsField.tsx` (chip multi-select → hidden `sports` inputs),
-seeded from `institutions.sports`.
+Programs use the shared `components/dashboard/ProgramsField.tsx` (chip multi-select → hidden `programs` inputs),
+seeded from `institutions.programs`.
 
 ### Nav
 - `components/dashboard/DashboardSidebar.tsx` — `ADMIN_NAV` now links **Students → `/dashboard/students`**
@@ -223,13 +223,13 @@ seeded from `institutions.sports`.
 - [x] `requireRole('admin')` gates `/dashboard/students*`
 - [x] Student list with search + status filter; **Add Student** sheet creates a record
 - [x] Single create returns a soft "possible duplicate" prompt (Add anyway / View existing / Cancel)
-- [x] Detail page: Profile / Guardian / Login / Jersey / Fees tabs save; Batches placeholder
+- [x] Detail page: Profile / Guardian / Login / Uniform / Fees tabs save; Batches tab lists enrolments (Module 5)
 - [x] Soft-delete sets `status='inactive'` (row kept); Reactivate restores
 - [x] Student records are created via direct insert — never routed through `institution_allowed_emails`
 - [x] **`001_foundation.sql`**: institution code + `generate_institution_code` / `next_student_code` RPCs, global unique index, `student_code` branch in `handle_new_user`
 - [x] **Student-code login**: `enableStudentLogin` / `resetStudentPassword` via service-role `lib/admin.ts`; `login` accepts a code (synthetic email)
 - [ ] **Apply migrations `001`–`003` in Supabase** + regenerate types via **Bash** (CLI installed); then drop the `(rpc as any)` casts
-- [ ] _(fast-follow)_ CSV import · photo upload · dedicated student portal UI · parent portal · batch assignment
+- [ ] _(fast-follow)_ CSV import · photo upload · dedicated student portal UI · parent portal
 
 ---
 

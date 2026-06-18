@@ -4,7 +4,7 @@ import { useActionState, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { GraduationCap, Plus, UserPlus } from 'lucide-react'
 import { createStudent, type ActionState } from './actions'
-import { SportsField } from '@/components/dashboard/SportsField'
+import { ProgramsField } from '@/components/dashboard/ProgramsField'
 import { GENDERS } from '@/lib/constants'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +23,7 @@ export type StudentRow = {
   id: string
   name: string
   callingName: string | null
-  sports: string[]
+  programs: string[]
   status: 'active' | 'inactive'
   parentMobile: string
   photoUrl: string | null
@@ -58,11 +58,11 @@ function initials(name: string) {
 function AddStudentSheet({
   open,
   onClose,
-  institutionSports,
+  institutionPrograms,
 }: {
   open: boolean
   onClose: () => void
-  institutionSports: string[]
+  institutionPrograms: string[]
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(
     createStudent,
@@ -155,8 +155,8 @@ function AddStudentSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Sports</Label>
-            <SportsField suggestions={institutionSports} />
+            <Label>Programs</Label>
+            <ProgramsField suggestions={institutionPrograms} />
           </div>
 
           <div className="space-y-1.5">
@@ -267,16 +267,16 @@ function StudentRowCard({ student }: { student: StudentRow }) {
           )}
         </p>
         <p className="truncate text-xs text-muted-foreground">{student.parentMobile}</p>
-        {student.sports.length > 0 && (
+        {student.programs.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1">
-            {student.sports.slice(0, 3).map((s) => (
+            {student.programs.slice(0, 3).map((s) => (
               <Badge key={s} variant="secondary" className="text-[10px]">
                 {s}
               </Badge>
             ))}
-            {student.sports.length > 3 && (
+            {student.programs.length > 3 && (
               <span className="text-[10px] text-muted-foreground">
-                +{student.sports.length - 3}
+                +{student.programs.length - 3}
               </span>
             )}
           </div>
@@ -296,10 +296,10 @@ function StudentRowCard({ student }: { student: StudentRow }) {
 
 export function StudentsClient({
   students,
-  institutionSports,
+  institutionPrograms,
 }: {
   students: StudentRow[]
-  institutionSports: string[]
+  institutionPrograms: string[]
 }) {
   const [filter, setFilter] = useState<FilterId>('all')
   const [query, setQuery] = useState('')
@@ -380,7 +380,7 @@ export function StudentsClient({
       <AddStudentSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        institutionSports={institutionSports}
+        institutionPrograms={institutionPrograms}
       />
     </div>
   )

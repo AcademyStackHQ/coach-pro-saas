@@ -12,8 +12,8 @@ import {
   type ActionState,
   type LoginActionState,
 } from '../actions'
-import { SportsField } from '@/components/dashboard/SportsField'
-import { GENDERS, JERSEY_SIZES } from '@/lib/constants'
+import { ProgramsField } from '@/components/dashboard/ProgramsField'
+import { GENDERS, UNIFORM_SIZES } from '@/lib/constants'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,24 +30,30 @@ export type StudentDetailData = {
   student_code: string | null
   user_id: string | null
   enrolment_date: string | null
-  sports: string[]
+  programs: string[]
   parent_name: string
   parent_mobile: string
   parent_email: string | null
   sms_opt_in: boolean
-  jersey_size: string | null
-  jersey_number: number | null
-  jersey_name: string | null
+  uniform_size: string | null
+  uniform_number: number | null
+  uniform_name: string | null
   monthly_fee: number | null
   deposit_amount: number | null
-  institutionSports: string[]
+  institutionPrograms: string[]
+  batches: {
+    id: string
+    name: string
+    program: string
+    status: 'active' | 'waitlisted'
+  }[]
 }
 
 const TABS = [
   { id: 'profile', label: 'Profile' },
   { id: 'parent', label: 'Parent' },
   { id: 'login', label: 'Login' },
-  { id: 'jersey', label: 'Jersey' },
+  { id: 'uniform', label: 'Uniform' },
   { id: 'fees', label: 'Fees' },
   { id: 'batches', label: 'Batches' },
 ] as const
@@ -152,8 +158,8 @@ function ProfileTab({ data }: { data: StudentDetailData }) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Sports</Label>
-            <SportsField initial={data.sports} suggestions={data.institutionSports} />
+            <Label>Programs</Label>
+            <ProgramsField initial={data.programs} suggestions={data.institutionPrograms} />
           </div>
 
           <SaveRow state={state} pending={pending} />
@@ -228,30 +234,30 @@ function ParentTab({ data }: { data: StudentDetailData }) {
   )
 }
 
-function JerseyTab({ data }: { data: StudentDetailData }) {
+function UniformTab({ data }: { data: StudentDetailData }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(updateStudent, {})
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Jersey</CardTitle>
+        <CardTitle>Uniform</CardTitle>
       </CardHeader>
       <CardContent>
         <form action={action} className="space-y-5">
           <input type="hidden" name="id" value={data.id} />
-          <input type="hidden" name="section" value="jersey" />
+          <input type="hidden" name="section" value="uniform" />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label htmlFor="jersey_size">Size</Label>
+              <Label htmlFor="uniform_size">Size</Label>
               <select
-                id="jersey_size"
-                name="jersey_size"
-                defaultValue={data.jersey_size ?? ''}
+                id="uniform_size"
+                name="uniform_size"
+                defaultValue={data.uniform_size ?? ''}
                 className={nativeSelectClass()}
               >
                 <option value="">—</option>
-                {JERSEY_SIZES.map((s) => (
+                {UNIFORM_SIZES.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
@@ -259,21 +265,21 @@ function JerseyTab({ data }: { data: StudentDetailData }) {
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="jersey_number">Number</Label>
+              <Label htmlFor="uniform_number">Number</Label>
               <Input
-                id="jersey_number"
-                name="jersey_number"
+                id="uniform_number"
+                name="uniform_number"
                 type="number"
                 min={0}
-                defaultValue={data.jersey_number ?? ''}
+                defaultValue={data.uniform_number ?? ''}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="jersey_name">Name on jersey</Label>
+              <Label htmlFor="uniform_name">Name on uniform</Label>
               <Input
-                id="jersey_name"
-                name="jersey_name"
-                defaultValue={data.jersey_name ?? ''}
+                id="uniform_name"
+                name="uniform_name"
+                defaultValue={data.uniform_name ?? ''}
               />
             </div>
           </div>
@@ -458,11 +464,46 @@ function LoginTab({ data }: { data: StudentDetailData }) {
   )
 }
 
-function Placeholder({ module }: { module: string }) {
+function BatchesTab({ data }: { data: StudentDetailData }) {
+  if (data.batches.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          Not enrolled in any batches yet. Enrol this student from a batch&apos;s
+          Students tab.
+        </CardContent>
+      </Card>
+    )
+  }
   return (
     <Card>
-      <CardContent className="py-12 text-center text-sm text-muted-foreground">
-        Available in {module}.
+      <CardHeader>
+        <CardTitle>Batches</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="divide-y">
+          {data.batches.map((b) => (
+            <li key={b.id} className="flex items-center justify-between gap-3 py-2.5">
+              <Link
+                href={`/dashboard/batches/${b.id}`}
+                className="min-w-0 flex-1 hover:underline"
+              >
+                <p className="truncate text-sm font-medium">{b.name}</p>
+                <p className="truncate text-xs text-muted-foreground">{b.program}</p>
+              </Link>
+              <span
+                className={cn(
+                  'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
+                  b.status === 'waitlisted'
+                    ? 'bg-amber-50 text-amber-700'
+                    : 'bg-green-50 text-green-700'
+                )}
+              >
+                {b.status === 'waitlisted' ? 'Waitlisted' : 'Active'}
+              </span>
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   )
@@ -529,9 +570,9 @@ export function StudentDetail({ data }: { data: StudentDetailData }) {
       {tab === 'profile' && <ProfileTab data={data} />}
       {tab === 'parent' && <ParentTab data={data} />}
       {tab === 'login' && <LoginTab data={data} />}
-      {tab === 'jersey' && <JerseyTab data={data} />}
+      {tab === 'uniform' && <UniformTab data={data} />}
       {tab === 'fees' && <FeesTab data={data} />}
-      {tab === 'batches' && <Placeholder module="Module 5" />}
+      {tab === 'batches' && <BatchesTab data={data} />}
     </div>
   )
 }

@@ -3,7 +3,7 @@ const steps = [
     number: "01",
     title: "Create your academy",
     description:
-      "Sign up free, add your academy name and first sport. No credit card needed.",
+      "Sign up free, add your academy name and first program. No credit card needed.",
   },
   {
     number: "02",

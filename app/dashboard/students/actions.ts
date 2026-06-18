@@ -110,7 +110,7 @@ export async function createStudent(
     return { error: 'Could not verify plan limits. Please try again.' }
   }
 
-  const sports = (formData.getAll('sports') as string[])
+  const programs = (formData.getAll('programs') as string[])
     .map((s) => s.trim())
     .filter(Boolean)
 
@@ -140,7 +140,7 @@ export async function createStudent(
       parent_email: parentEmail,
       student_code: studentCode as string,
       enrolment_date: strOrNull(formData, 'enrolment_date') ?? undefined,
-      sports,
+      programs,
       // Optional fees captured at enrolment — stored in paise.
       monthly_fee: rupeesToPaise(formData.get('monthly_fee')),
       deposit_amount: rupeesToPaise(formData.get('deposit_amount')),
@@ -175,7 +175,7 @@ export async function updateStudent(
   const id = str(formData, 'id')
   if (!id) return { error: 'Missing student.' }
 
-  const section = str(formData, 'section') // 'profile' | 'parent' | 'jersey'
+  const section = str(formData, 'section') // 'profile' | 'parent' | 'uniform'
 
   // Only patch the fields belonging to the submitted section, so each tab's
   // form doesn't clobber the others.
@@ -192,7 +192,7 @@ export async function updateStudent(
     patch.gender = strOrNull(formData, 'gender')
     // student_code is auto-generated and the login handle — never hand-edited.
     patch.enrolment_date = strOrNull(formData, 'enrolment_date')
-    patch.sports = (formData.getAll('sports') as string[])
+    patch.programs = (formData.getAll('programs') as string[])
       .map((s) => s.trim())
       .filter(Boolean)
   } else if (section === 'parent') {
@@ -208,11 +208,11 @@ export async function updateStudent(
     patch.parent_mobile = parentMobile
     patch.parent_email = parentEmail
     patch.sms_opt_in = str(formData, 'sms_opt_in') === 'on'
-  } else if (section === 'jersey') {
-    patch.jersey_size = strOrNull(formData, 'jersey_size')
-    const num = str(formData, 'jersey_number')
-    patch.jersey_number = num === '' ? null : Number(num)
-    patch.jersey_name = strOrNull(formData, 'jersey_name')
+  } else if (section === 'uniform') {
+    patch.uniform_size = strOrNull(formData, 'uniform_size')
+    const num = str(formData, 'uniform_number')
+    patch.uniform_number = num === '' ? null : Number(num)
+    patch.uniform_name = strOrNull(formData, 'uniform_name')
   } else if (section === 'fees') {
     patch.monthly_fee = rupeesToPaise(formData.get('monthly_fee'))
     patch.deposit_amount = rupeesToPaise(formData.get('deposit_amount'))

@@ -11,7 +11,7 @@ const features = [
     icon: "👥",
     title: "Student Management",
     description:
-      "Enrol students, manage profiles, track jersey details and guardian contacts in one place.",
+      "Enrol students, manage profiles, track uniform details and guardian contacts in one place.",
   },
   {
     icon: "📅",

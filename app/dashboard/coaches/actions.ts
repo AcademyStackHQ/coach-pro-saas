@@ -79,7 +79,7 @@ export async function inviteCoach(
 }
 
 // ---------------------------------------------------------------------------
-// Update coaching profile (sports, bio, colour) — admin only, by user_id.
+// Update coaching profile (programs, bio, colour) — admin only, by user_id.
 // Upserts the coaches extension row; assigns a colour on first create.
 // ---------------------------------------------------------------------------
 export async function updateCoachProfile(
@@ -92,7 +92,7 @@ export async function updateCoachProfile(
   const userId = (formData.get('user_id') as string)?.trim()
   if (!userId) return { error: 'Missing coach.' }
 
-  const sports = (formData.getAll('sports') as string[])
+  const programs = (formData.getAll('programs') as string[])
     .map((s) => s.trim())
     .filter(Boolean)
   const bio = ((formData.get('bio') as string) ?? '').trim()
@@ -116,7 +116,7 @@ export async function updateCoachProfile(
   const { error } = await supabase
     .from('coaches')
     .upsert(
-      { institution_id: institutionId, user_id: userId, sports, bio, color },
+      { institution_id: institutionId, user_id: userId, programs, bio, color },
       { onConflict: 'institution_id,user_id' }
     )
 

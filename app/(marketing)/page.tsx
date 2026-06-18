@@ -6,7 +6,7 @@ import { Pricing } from "@/components/marketing/Pricing"
 import { Stories } from "@/components/marketing/Stories"
 
 export const metadata: Metadata = {
-  title: "CoachPro — Sports Academy Management Software",
+  title: "CoachPro — Academy Management Software",
   alternates: {
     canonical: "https://coachpro.in",
   },

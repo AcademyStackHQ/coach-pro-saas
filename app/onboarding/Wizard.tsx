@@ -355,7 +355,7 @@ export function OnboardingWizard({ institution }: { institution: WizardInstituti
               <CardTitle>Enrol Your First Student</CardTitle>
               <CardDescription>
                 Students are records you manage — no login or email needed. Add the basics now; you can
-                fill in more details (sports, fees, jersey) from the Students page later.
+                fill in more details (programs, fees, uniform) from the Students page later.
               </CardDescription>
             </CardHeader>
             <CardContent>

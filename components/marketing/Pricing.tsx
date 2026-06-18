@@ -59,7 +59,7 @@ const plans = [
     name: "Scale",
     priceLabel: () => "Custom",
     priceSuffix: "volume rate",
-    description: "For large academies and multi-branch sports organisations.",
+    description: "For large academies and multi-branch organisations.",
     limits: "300+ students · lower per-head rate",
     cta: "Contact us",
     ctaHref: "mailto:vinothdevaraj14@gmail.com",

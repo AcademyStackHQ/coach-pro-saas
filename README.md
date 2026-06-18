@@ -41,7 +41,7 @@ npx supabase db push
 Regenerate types after any migration:
 
 ```bash
-npx supabase gen types typescript --project-id <project-id> > lib/supabase/types.ts
+npx supabase gen types typescript --project-id zuxylgzmdyynmzsacaqk > lib/supabase/types.ts
 ```
 
 > Install the `supabase` CLI first (`npm i -D supabase`). Otherwise `npx`'s "Ok to proceed?" prompt is
