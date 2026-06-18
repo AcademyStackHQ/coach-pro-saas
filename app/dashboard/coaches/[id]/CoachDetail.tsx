@@ -10,7 +10,12 @@ import {
   reactivateCoach,
   type ActionState,
 } from '../actions'
-import { COACH_COLORS } from '@/lib/constants'
+import {
+  COACH_COLORS,
+  batchScheduleLabel,
+  capacityBadge,
+  type BatchSlot,
+} from '@/lib/constants'
 import { AvailabilityEditor } from '@/components/dashboard/AvailabilityEditor'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -25,12 +30,20 @@ export type CoachDetailData = {
   email: string
   mobile: string | null
   avatar_url: string | null
-  sports: string[]
+  programs: string[]
   bio: string
   color: string | null
   availability: unknown
   joined_at: string | null
-  institutionSports: string[]
+  institutionPrograms: string[]
+  batches: {
+    id: string
+    name: string
+    slots: BatchSlot[]
+    capacity: number
+    enrolled: number
+    status: 'active' | 'inactive'
+  }[]
 }
 
 const TABS = [
@@ -48,24 +61,24 @@ function ProfileTab({ data }: { data: CoachDetailData }) {
     {}
   )
   const [color, setColor] = useState<string>(data.color ?? COACH_COLORS[0])
-  const [selectedSports, setSelectedSports] = useState<string[]>(data.sports)
-  const [customSport, setCustomSport] = useState('')
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>(data.programs)
+  const [customProgram, setCustomProgram] = useState('')
 
-  function toggleSport(sport: string) {
-    setSelectedSports((prev) =>
-      prev.includes(sport) ? prev.filter((s) => s !== sport) : [...prev, sport]
+  function toggleProgram(program: string) {
+    setSelectedPrograms((prev) =>
+      prev.includes(program) ? prev.filter((s) => s !== program) : [...prev, program]
     )
   }
 
-  function addCustomSport() {
-    const s = customSport.trim()
-    if (s && !selectedSports.includes(s)) setSelectedSports((prev) => [...prev, s])
-    setCustomSport('')
+  function addCustomProgram() {
+    const s = customProgram.trim()
+    if (s && !selectedPrograms.includes(s)) setSelectedPrograms((prev) => [...prev, s])
+    setCustomProgram('')
   }
 
-  // Union of institution sports + any already on the coach + custom additions.
-  const sportOptions = Array.from(
-    new Set([...data.institutionSports, ...selectedSports])
+  // Union of institution programs + any already on the coach + custom additions.
+  const programOptions = Array.from(
+    new Set([...data.institutionPrograms, ...selectedPrograms])
   )
 
   return (
@@ -77,8 +90,8 @@ function ProfileTab({ data }: { data: CoachDetailData }) {
         <form action={action} className="space-y-5">
           <input type="hidden" name="user_id" value={data.user_id} />
           <input type="hidden" name="color" value={color} />
-          {selectedSports.map((s) => (
-            <input key={s} type="hidden" name="sports" value={s} />
+          {selectedPrograms.map((s) => (
+            <input key={s} type="hidden" name="programs" value={s} />
           ))}
 
           {/* Read-only identity (lives in profiles) */}
@@ -94,21 +107,21 @@ function ProfileTab({ data }: { data: CoachDetailData }) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Sports</Label>
+            <Label>Programs</Label>
             <div className="flex flex-wrap gap-2">
-              {sportOptions.length === 0 && (
+              {programOptions.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  No sports configured yet — add one below.
+                  No programs configured yet — add one below.
                 </p>
               )}
-              {sportOptions.map((s) => (
+              {programOptions.map((s) => (
                 <button
                   key={s}
                   type="button"
-                  onClick={() => toggleSport(s)}
+                  onClick={() => toggleProgram(s)}
                   className={cn(
                     'rounded-full border px-3 py-1 text-sm transition-colors',
-                    selectedSports.includes(s)
+                    selectedPrograms.includes(s)
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'border-input text-muted-foreground hover:border-primary/40'
                   )}
@@ -119,17 +132,17 @@ function ProfileTab({ data }: { data: CoachDetailData }) {
             </div>
             <div className="flex gap-2 pt-1">
               <Input
-                value={customSport}
-                onChange={(e) => setCustomSport(e.target.value)}
-                placeholder="Add a sport"
+                value={customProgram}
+                onChange={(e) => setCustomProgram(e.target.value)}
+                placeholder="Add a program"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
-                    addCustomSport()
+                    addCustomProgram()
                   }
                 }}
               />
-              <Button type="button" variant="outline" onClick={addCustomSport}>
+              <Button type="button" variant="outline" onClick={addCustomProgram}>
                 Add
               </Button>
             </div>
@@ -180,6 +193,56 @@ function ProfileTab({ data }: { data: CoachDetailData }) {
             </Button>
           </div>
         </form>
+      </CardContent>
+    </Card>
+  )
+}
+
+function BatchesTab({ batches }: { batches: CoachDetailData['batches'] }) {
+  if (batches.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          No batches assigned to this coach yet.
+        </CardContent>
+      </Card>
+    )
+  }
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Batches</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="divide-y">
+          {batches.map((b) => {
+            const cap = capacityBadge(b.enrolled, b.capacity)
+            return (
+              <li key={b.id} className="flex items-center justify-between gap-3 py-2.5">
+                <Link
+                  href={`/dashboard/batches/${b.id}`}
+                  className="min-w-0 flex-1 hover:underline"
+                >
+                  <p className="truncate text-sm font-medium">{b.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {batchScheduleLabel(b.slots)}
+                  </p>
+                </Link>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {b.enrolled}/{b.capacity}
+                </span>
+                <span
+                  className={cn(
+                    'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
+                    b.status === 'inactive' ? 'bg-muted text-muted-foreground' : cap.className
+                  )}
+                >
+                  {b.status === 'inactive' ? 'Inactive' : cap.label}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
       </CardContent>
     </Card>
   )
@@ -270,7 +333,7 @@ export function CoachDetail({ data }: { data: CoachDetailData }) {
           </CardContent>
         </Card>
       )}
-      {tab === 'batches' && <Placeholder module="Module 5" />}
+      {tab === 'batches' && <BatchesTab batches={data.batches} />}
       {tab === 'calendar' && <Placeholder module="Module 6" />}
     </div>
   )

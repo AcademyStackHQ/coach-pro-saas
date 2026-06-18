@@ -93,7 +93,7 @@ The `(marketing)` group uses a different layout from the app — no sidebar, no 
 
 | Icon | Title | Description |
 |---|---|---|
-| 👥 | Student Management | Pre-approve student emails, let them self-sign-up, and manage profiles, jersey details, and guardian contacts in one place. |
+| 👥 | Student Management | Pre-approve student emails, let them self-sign-up, and manage profiles, uniform details, and guardian contacts in one place. |
 | 📅 | Smart Scheduling | Batch calendars and 1-to-1 sessions with automatic conflict detection for coaches and venues. |
 | 💳 | Fee Collection | Auto-generate monthly invoices, record payments, and send PDF receipts instantly. |
 | 📱 | SMS & WhatsApp | Automated fee reminders and payment confirmations sent directly to parents. |
@@ -110,7 +110,7 @@ The `(marketing)` group uses a different layout from the app — no sidebar, no 
 
 3-step horizontal flow (numbered, icon + title + description):
 
-1. **Create your academy** — Sign up free, add your academy name and first sport. No credit card needed.
+1. **Create your academy** — Sign up free, add your academy name and first program. No credit card needed.
 2. **Add coaches and batches** — Invite coaches by email, set your batch schedules and monthly fees.
 3. **Pre-approve your students** — Add student emails from your dashboard. Students self-sign-up and are instantly linked to your academy — no manual linking needed.
 4. **Collect fees automatically** — Auto-generate monthly invoices, record payments, and send PDF receipts.
@@ -143,7 +143,7 @@ Feature comparison toggle (monthly / annual, annual = 2 months free).
 
 3 testimonial cards:
 
-Each card: `"Quote text"` · Name · Role · Academy Name · Sport badge
+Each card: `"Quote text"` · Name · Role · Academy Name · Program badge
 
 Placeholder quotes to be replaced with real customer quotes pre-launch.
 
@@ -174,13 +174,13 @@ Bottom bar: `© 2025 CoachPro. All rights reserved.`
 
 ```ts
 export const metadata: Metadata = {
-  title: 'CoachPro — Sports Academy Management Software',
+  title: 'CoachPro — Academy Management Software',
   description:
-    'Manage student enrolments, batch schedules, fee collection, and parent communication for your sports coaching academy. Free to start.',
-  keywords: ['sports academy software', 'coaching management', 'student fee management India'],
+    'Manage student enrolments, batch schedules, fee collection, and parent communication for your coaching & teaching academy. Free to start.',
+  keywords: ['academy management software', 'coaching management', 'student fee management India'],
   openGraph: {
     title: 'CoachPro — Run your coaching academy from one place',
-    description: 'Cloud platform for sports academies. Enrolments, scheduling, fees, and SMS — all in one place.',
+    description: 'Cloud platform for coaching & teaching academies. Enrolments, scheduling, fees, and SMS — all in one place.',
     url: 'https://coachpro.app',
     siteName: 'CoachPro',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
@@ -188,7 +188,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CoachPro — Sports Academy Management',
+    title: 'CoachPro — Academy Management',
     description: 'Cloud platform for coaching academies.',
     images: ['/og-image.png'],
   },
@@ -217,7 +217,7 @@ Add to `app/(marketing)/layout.tsx`:
         priceCurrency: 'INR',
         description: 'Free plan available',
       },
-      description: 'Cloud platform for sports coaching academies to manage students, schedules, fees, and communications.',
+      description: 'Cloud platform for coaching & teaching academies to manage students, schedules, fees, and communications.',
     }),
   }}
 />

@@ -43,14 +43,14 @@ export async function updateMyProfile(
 
   if (!student) return { error: 'Your student record was not found.' }
 
-  let jerseyNumber: number | null = null
-  const numRaw = ((formData.get('jersey_number') as string) ?? '').trim()
+  let uniformNumber: number | null = null
+  const numRaw = ((formData.get('uniform_number') as string) ?? '').trim()
   if (numRaw !== '') {
     const n = Number(numRaw)
     if (!Number.isInteger(n) || n < 0) {
-      return { error: 'Jersey number must be a whole number.' }
+      return { error: 'Uniform number must be a whole number.' }
     }
-    jerseyNumber = n
+    uniformNumber = n
   }
 
   const admin = createAdminClient()
@@ -58,8 +58,8 @@ export async function updateMyProfile(
     .from('students')
     .update({
       calling_name: strOrNull(formData, 'calling_name'),
-      jersey_name: strOrNull(formData, 'jersey_name'),
-      jersey_number: jerseyNumber,
+      uniform_name: strOrNull(formData, 'uniform_name'),
+      uniform_number: uniformNumber,
     })
     .eq('id', student.id)
     .eq('user_id', session.userId) // ownership double-guard

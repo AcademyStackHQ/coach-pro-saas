@@ -15,9 +15,9 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://coachpro.in"),
-  title: "CoachPro — Sports Academy Management Software",
+  title: "CoachPro — Academy Management Software",
   description:
-    "Manage student enrolments, batch schedules, fee collection, and parent communication for your sports coaching academy. Free to start.",
+    "Manage student enrolments, batch schedules, fee collection, and parent communication for your coaching & teaching academy. Free to start.",
 }
 
 export default function RootLayout({

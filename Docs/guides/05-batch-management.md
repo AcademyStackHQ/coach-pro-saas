@@ -1,8 +1,44 @@
 ﻿# Module 5 — Batch Management
 
-**Status:** `🔲 Pending`
+**Status:** `✅ Done`
 **Priority:** 5 of 8
 **Back to index:** [docs/README.md](../README.md)
+
+---
+
+## Architecture note (how the build differs from the generic spec below)
+
+The spec below uses `tenant_id` + REST API routes; the actual build follows this
+codebase's conventions:
+
+- **`institution_id`** (not `tenant_id`), with Supabase **RLS** via the shared
+  helpers (`is_admin_of` / `is_coach_of` / `get_my_institution_ids`) — no
+  app-level tenant filtering.
+- **Server Actions** in `app/dashboard/batches/actions.ts` (not `/api` routes):
+  `createBatch`, `updateBatch`, `deactivate/reactivateBatch`, `enrolStudent`,
+  `removeStudent`. Institution is read from the httpOnly cookie via
+  `getActiveSession()`, never from form fields.
+- **Coaches control their own batches.** RLS helper `owns_batch_coach(coach_id)`
+  lets a coach create/edit/manage enrolment for batches assigned to them; admins
+  manage all. `/dashboard/batches` renders the coach's own batches (create form
+  pins `coach_id` to self); only admins see the coach picker and the
+  activate/deactivate toggle.
+- **Per-day schedule.** Each training day carries its own start/end time
+  (e.g. Fri 17:00–18:30, Sat/Sun 07:00–08:30), stored as a JSONB `schedule`
+  array of `{ day, start, end }` on `batches` (`day` = JS `Date.getDay()`
+  index, 0 = Sun … 6 = Sat) so the occurrence preview / calendar computes
+  directly. The form serialises selected days + times into a hidden `schedule`
+  field; `parseSchedule()` (`lib/constants.ts`) validates it on read.
+- **Money** (`monthly_fee`) in **paise**. Conflict detection runs server-side in
+  TS, comparing the new batch's per-day slots against the institution's active
+  batches slot-by-slot (same day + JS time-overlap): coach clash hard-blocks,
+  venue clash warns with an override confirm.
+- Tables: `batches` + `batch_students` (join, with `active`/`waitlisted`/
+  `dropped` status) in `supabase/migrations/004_batches.sql`. `planGuard('batch')`
+  counts active batches (Free limit 2). Capacity badge + schedule label helpers
+  live in `lib/constants.ts`; the shared form is `components/dashboard/BatchFormFields.tsx`.
+- The Batches tabs on the coach and student detail pages now render real
+  enrolment data.
 
 ---
 
@@ -24,11 +60,9 @@
 | `id` | `UUID PK` | |
 | `tenant_id` | `UUID FK → tenants` | RLS key |
 | `name` | `TEXT NOT NULL` | e.g. "U-12 Cricket Morning" |
-| `sport` | `TEXT NOT NULL` | |
+| `program` | `TEXT NOT NULL` | |
 | `coach_id` | `UUID FK → coaches` | |
-| `days_of_week` | `INT[]` | 0 = Sun … 6 = Sat |
-| `start_time` | `TIME NOT NULL` | |
-| `end_time` | `TIME NOT NULL` | |
+| `schedule` | `JSONB NOT NULL DEFAULT '[]'` | per-day slots `[{ day, start, end }]`, `day` = 0 = Sun … 6 = Sat |
 | `venue` | `TEXT` | |
 | `capacity` | `INT NOT NULL` | max active enrolments |
 | `monthly_fee` | `INT NOT NULL` | in **paise** |
@@ -109,16 +143,17 @@ WHERE batch_id = $id AND status = 'active'
 ### `/batches` — Batch List
 
 - Card view (not table — schedule info is richer in cards)
-- Card content: name, sport, coach name, days+time, venue, capacity badge, monthly fee
-- Filter: Sport / Coach / Status
+- Card content: name, program, coach name, days+time, venue, capacity badge, monthly fee
+- Filter: Program / Coach / Status
 - "Create Batch" button → opens modal
 
 ### Create Batch Modal
 
 Fields:
-- Name, Sport, Coach (dropdown from active coaches), Venue
-- Days of week (checkbox group: M T W T F S S)
-- Start time / End time (time pickers)
+- Name, Program, Coach (dropdown from active coaches), Venue
+- Training days (chip toggles: M T W T F S S) — selecting a day reveals its own
+  Start/End time pickers, so each day can run at a different time. A "use the
+  first day's time for all" shortcut fills the rest.
 - Capacity (number input)
 - Monthly fee (INR input → stored × 100 as paise)
 - Effective from (date picker)
@@ -138,17 +173,18 @@ Tabs:
 
 ## Completion Checklist
 
-- [ ] `batches` table created with RLS
-- [ ] `planGuard('batch')` blocks create on Free tier at 2 batches
-- [ ] Coach conflict check blocks overlapping schedule for same coach
-- [ ] Venue conflict check warns (non-blocking) for overlapping venue
-- [ ] Capacity badge renders correct colour on batch cards
-- [ ] Enrolment beyond capacity auto-sets `status = 'waitlisted'`
-- [ ] Removing a student promotes first waitlisted student
-- [ ] Batch list page filters by sport / coach / status
-- [ ] Batch detail "Students" tab shows enrolled + waitlisted rows
-- [ ] "Add Student" to batch calls Module 4's enrolment API
-- [ ] Soft-delete sets `status = 'inactive'`, does not remove rows
+- [x] `batches` (+ `batch_students`) tables created with RLS
+- [x] `planGuard('batch')` blocks create on Free tier at 2 batches
+- [x] Coach conflict check blocks overlapping schedule for same coach
+- [x] Venue conflict check warns (non-blocking, override) for overlapping venue
+- [x] Capacity badge renders correct colour on batch cards
+- [x] Enrolment beyond capacity auto-sets `status = 'waitlisted'`
+- [x] Removing a student promotes first waitlisted student
+- [x] Batch list page filters by program / coach / status
+- [x] Batch detail "Students" tab shows enrolled + waitlisted rows
+- [x] "Add Student" to batch enrols from the institution's active students
+- [x] Soft-delete sets `status = 'inactive'`, does not remove rows
+- [x] Coaches can create/edit/manage enrolment for their own batches
 
 ---
 

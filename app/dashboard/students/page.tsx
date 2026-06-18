@@ -17,14 +17,14 @@ export default async function StudentsPage() {
     supabase
       .from('students')
       .select(
-        'id, full_name, calling_name, sports, status, parent_mobile, photo_url'
+        'id, full_name, calling_name, programs, status, parent_mobile, photo_url'
       )
       .eq('institution_id', institutionId)
       .order('created_at', { ascending: false }),
 
     supabase
       .from('institutions')
-      .select('sports')
+      .select('programs')
       .eq('id', institutionId)
       .single(),
   ])
@@ -33,13 +33,13 @@ export default async function StudentsPage() {
     id: s.id,
     name: s.full_name,
     callingName: s.calling_name,
-    sports: s.sports ?? [],
+    programs: s.programs ?? [],
     status: s.status === 'inactive' ? 'inactive' : 'active',
     parentMobile: s.parent_mobile,
     photoUrl: s.photo_url,
   }))
 
   return (
-    <StudentsClient students={rows} institutionSports={institution?.sports ?? []} />
+    <StudentsClient students={rows} institutionPrograms={institution?.programs ?? []} />
   )
 }

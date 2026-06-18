@@ -23,7 +23,7 @@ export type CoachRow = {
   name: string
   email: string
   avatar_url: string | null
-  sports: string[]
+  programs: string[]
   color: string | null
 }
 
@@ -119,16 +119,16 @@ function CoachCard({ coach }: { coach: CoachRow }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{coach.name}</p>
         <p className="truncate text-xs text-muted-foreground">{coach.email}</p>
-        {coach.sports.length > 0 && (
+        {coach.programs.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1">
-            {coach.sports.slice(0, 3).map((s) => (
+            {coach.programs.slice(0, 3).map((s) => (
               <Badge key={s} variant="secondary" className="text-[10px]">
                 {s}
               </Badge>
             ))}
-            {coach.sports.length > 3 && (
+            {coach.programs.length > 3 && (
               <span className="text-[10px] text-muted-foreground">
-                +{coach.sports.length - 3}
+                +{coach.programs.length - 3}
               </span>
             )}
           </div>
@@ -167,7 +167,7 @@ export function CoachesClient({ coaches }: { coaches: CoachRow[] }) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Coaches</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Invite coaches and manage their sports, availability, and calendar colour.
+            Invite coaches and manage their programs, availability, and calendar colour.
           </p>
         </div>
         <Button onClick={() => setSheetOpen(true)}>

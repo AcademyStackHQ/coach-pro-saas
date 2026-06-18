@@ -34,8 +34,18 @@ export async function planGuard(
 
   const limit = FREE_PLAN_LIMITS[resource]
 
-  // Batch table is introduced in Module 5; guard wired up then.
-  if (resource === 'batch') return
+  // Batches are first-class tenant rows (the `batches` table) — count active
+  // ones so the Free limit fires (Module 5).
+  if (resource === 'batch') {
+    const { count } = await supabase
+      .from('batches')
+      .select('*', { count: 'exact', head: true })
+      .eq('institution_id', institutionId)
+      .eq('status', 'active')
+
+    if ((count ?? 0) >= limit) throw new PlanLimitError('batch', limit)
+    return
+  }
 
   // Students are academy-owned records (the `students` table), NOT
   // institution_members — count them there so the Free limit actually fires.

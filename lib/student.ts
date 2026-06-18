@@ -20,14 +20,14 @@ export type MyStudentRecord = {
   student_code: string | null
   status: 'active' | 'inactive'
   enrolment_date: string | null
-  sports: string[]
+  programs: string[]
   photo_url: string | null
   parent_name: string
   parent_mobile: string
   parent_email: string | null
-  jersey_size: string | null
-  jersey_number: number | null
-  jersey_name: string | null
+  uniform_size: string | null
+  uniform_number: number | null
+  uniform_name: string | null
   monthly_fee: number | null
   deposit_amount: number | null
 }
@@ -63,7 +63,7 @@ export async function getMyStudentContext(): Promise<MyStudentContext> {
     supabase
       .from('students')
       .select(
-        'id, full_name, calling_name, dob, gender, student_code, status, enrolment_date, sports, photo_url, parent_name, parent_mobile, parent_email, jersey_size, jersey_number, jersey_name, monthly_fee, deposit_amount'
+        'id, full_name, calling_name, dob, gender, student_code, status, enrolment_date, programs, photo_url, parent_name, parent_mobile, parent_email, uniform_size, uniform_number, uniform_name, monthly_fee, deposit_amount'
       )
       .eq('user_id', session.userId)
       .eq('institution_id', session.institutionId)

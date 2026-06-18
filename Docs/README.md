@@ -1,6 +1,6 @@
 # CoachPro — Feature Documentation
 
-Multi-tenant sports academy SaaS. This index is the single entry point for all feature docs.
+Multi-tenant academy & class management SaaS (sports, tuition, dance, music, and more). This index is the single entry point for all feature docs.
 Navigate to any module below for implementation details, API contracts, and status.
 
 ---
@@ -25,7 +25,7 @@ Navigate to any module below for implementation details, API contracts, and stat
 | 2 | Academy Onboarding & Settings | `✅ Done` | [→ details](./guides/02-tenant-academy-setup.md) |
 | 3 | Coach Management | `✅ Done` | [→ details](./guides/03-coach-management.md) |
 | 4 | Student Management | `✅ Done` | [→ details](./guides/04-student-management.md) |
-| 5 | Batch Management | `🔲 Pending` | [→ details](./guides/05-batch-management.md) |
+| 5 | Batch Management | `✅ Done` | [→ details](./guides/05-batch-management.md) |
 | 6 | Calendar & Scheduling | `🔲 Pending` | [→ details](./guides/06-calendar-scheduling.md) |
 | 7 | Fee Management | `🔲 Pending` | [→ details](./guides/07-fee-management.md) |
 | 8 | SMS Notifications | `🔲 Pending` | [→ details](./guides/08-sms-notifications.md) |

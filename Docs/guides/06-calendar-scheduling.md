@@ -46,8 +46,10 @@ Apply RLS. Index: `(tenant_id, coach_id, date)`.
 Server computes and merges two event types:
 
 **1. Batch occurrences (computed on-the-fly):**
-For each active batch, iterate `days_of_week` × date range:
-- Generate occurrence dates where `date >= effective_from` and `date` falls on a matching day
+For each active batch, iterate its `schedule` slots (`[{ day, start, end }]`, `day` =
+JS `Date.getDay()` index, 0 = Sun … 6 = Sat — see Module 5) × date range:
+- Generate occurrence dates where `date >= effective_from` and `date`'s weekday matches a
+  slot's `day`; the slot's `start`/`end` give that occurrence's time (per-day times vary)
 - Return as virtual events (no DB row)
 
 **2. 1-to-1 sessions (from DB):**
@@ -138,7 +140,7 @@ WHERE coach_id = $coachId AND date = $date AND status != 'cancelled'
   AND NOT (end_time <= $startTime OR start_time >= $endTime)
 
 -- ALSO check batch occurrences for that date
--- (computed in app logic — check days_of_week for this date, time overlap)
+-- (computed in app logic — check the batch's `schedule` slot for this date's weekday, time overlap)
 ```
 
 **Student conflict:**
@@ -175,7 +177,7 @@ Fields:
 
 - [ ] `sessions` table created with RLS
 - [ ] `GET /api/calendar` returns merged batch occurrences + sessions
-- [ ] Batch occurrences computed correctly from `days_of_week` + `effective_from`
+- [ ] Batch occurrences computed correctly from the batch `schedule` slots + `effective_from`
 - [ ] Calendar renders in Month / Week / Day views
 - [ ] Coach colour lanes work in Week view
 - [ ] Admin sees all coaches' events; coach sees only own

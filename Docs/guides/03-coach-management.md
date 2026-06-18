@@ -9,7 +9,7 @@
 ## What This Module Delivers
 
 - Admin: coach list + invite-by-email + manage coaching profile (soft-deactivate, never hard delete)
-- Coaching profile data: sports taught, weekly availability grid, calendar colour
+- Coaching profile data: programs taught, weekly availability grid, calendar colour
 - Coach self-service: edit own availability; a coach-scoped dashboard view
 - The foundation Module 5 (Batches) and Module 6 (Calendar) build on — a coach must exist before a batch can be assigned to one
 
@@ -42,14 +42,14 @@ This module does **not** reinvent the invite — it reuses the existing allowlis
 
 A `coaches` row holds the *coaching attributes* of a person who is already an active member of the
 institution. Identity (login) and role live in `profiles` / `institution_members`; this table only adds
-sports, availability, and calendar colour.
+programs, availability, and calendar colour.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | `UUID PK DEFAULT gen_random_uuid()` | |
 | `institution_id` | `UUID FK → institutions` | RLS key |
 | `user_id` | `UUID FK → profiles` | the coach's login. Set once the coach has joined (has a `profiles` row) |
-| `sports` | `TEXT[] DEFAULT '{}'` | sports this coach can teach |
+| `programs` | `TEXT[] DEFAULT '{}'` | programs this coach can teach |
 | `availability` | `JSONB DEFAULT '{}'` | **Multi-block per day** (supports split shifts): `{ "mon": [{"start":"06:00","end":"09:00"},{"start":"17:00","end":"20:00"}], "tue": [], ... }`. Distinct from `institutions.working_hours` (single open/start/end block) |
 | `color` | `TEXT` | hex colour for the coach's calendar lane (Module 6). Auto-assigned from a palette, admin can override |
 | `bio` | `TEXT` | optional short bio |
@@ -99,11 +99,11 @@ The coach list is the **union** of two sources, because an invited coach may not
 | State | Where it lives | UI |
 |---|---|---|
 | **Pending** | `institution_allowed_emails` (`role='coach'`, `status='pending'`) — no profile/membership yet | "Pending — awaiting sign-up" badge. No coaching profile editable yet |
-| **Active** | `institution_members` (`role='coach'`, `status='active'`) + optional `coaches` extension row | Full profile: sports, availability, colour |
+| **Active** | `institution_members` (`role='coach'`, `status='active'`) + optional `coaches` extension row | Full profile: programs, availability, colour |
 
 The `coaches` extension row is created lazily — the first time an admin saves coaching attributes for a
 coach who has joined (`upsert` on `(institution_id, user_id)`). A freshly-joined coach with no extension
-row yet simply shows empty sports/availability.
+row yet simply shows empty programs/availability.
 
 ---
 
@@ -126,7 +126,7 @@ row yet simply shows empty sports/availability.
      links them on sign-up. (This is exactly what onboarding Step 2 already does.)
 4. Coach signs up / signs in through the normal Module 1 flow — **no `/invite/[token]` page, no
    `inviteUserByEmail`.** (Optionally send them a notification email later via Module 8.)
-5. On first admin edit of sports/availability/colour, the `coaches` extension row is upserted.
+5. On first admin edit of programs/availability/colour, the `coaches` extension row is upserted.
 
 ---
 
@@ -138,7 +138,7 @@ Follow the Module 2 convention: `'use server'`, `ActionState` return type, insti
 | Action | Purpose |
 |---|---|
 | `inviteCoach(prev, formData)` | `planGuard('coach')` → `link_user_to_institution(role='coach')`. Returns pending/joined |
-| `updateCoachProfile(prev, formData)` | Upsert `coaches` (sports, bio, colour) for a `user_id` in the active institution |
+| `updateCoachProfile(prev, formData)` | Upsert `coaches` (programs, bio, colour) for a `user_id` in the active institution |
 | `saveCoachAvailability(prev, formData)` | Upsert `coaches.availability` JSONB (multi-block per day) |
 | `deactivateCoach(formData)` | Set `institution_members.status = 'inactive'` for that user_id |
 | `reactivateCoach(formData)` | Set `institution_members.status = 'active'` |
@@ -154,8 +154,7 @@ Follow the Module 2 convention: `'use server'`, `ActionState` return type, insti
 ### `/dashboard/coaches` — Coach List
 
 - Admin-only (per-page role guard — see below). The sidebar link already exists.
-- Card or table view: name, sports tags, status badge (Active / Inactive / Pending), assigned batch
-  count (placeholder `—` until Module 5).
+- Card or table view: name, programs tags, status badge (Active / Inactive / Pending).
 - Status filter: All / Active / Inactive / Pending.
 - **Add Coach** → side sheet (`components/ui/sheet`) with the invite form.
 - Click an active coach → `/dashboard/coaches/[id]`.
@@ -164,12 +163,12 @@ Follow the Module 2 convention: `'use server'`, `ActionState` return type, insti
 
 `[id]` is the coach's `user_id`. Tabs (native buttons + state — **Tabs primitive is not installed**):
 
-1. **Profile** — name, mobile, avatar (read from `profiles`), sports (multi-select), bio, colour swatch,
-   join date. Sports/bio/colour save via `updateCoachProfile`.
+1. **Profile** — name, mobile, avatar (read from `profiles`), programs (multi-select), bio, colour swatch,
+   join date. Programs/bio/colour save via `updateCoachProfile`.
 2. **Availability** — 7-day grid; each day holds a **list** of start–end blocks (Add block / remove),
    so a coach can have split shifts. Implemented as the shared `AvailabilityEditor` component (modeled
    on the Module 2 working-hours editor but multi-block); saves JSONB via `saveCoachAvailability`.
-3. **Batches** — placeholder until Module 5 (list of assigned batches).
+3. **Batches** — the coach's assigned batches with per-day schedule label and active enrolment count, each linking to `/dashboard/batches/[id]` (Module 5). Empty-state when none.
 4. **Calendar** — placeholder until Module 6 (read-only week view of this coach's sessions).
 
 A **Deactivate** action (with confirm) sets membership inactive; deactivated coaches show a Reactivate
@@ -214,7 +213,7 @@ a swatch picker on the Profile tab. Module 6 reads `coaches.color` for calendar 
 
 ## Completion Checklist
 
-- [ ] `coaches` extension table created (`institution_id`, `user_id`, `sports`, `availability`, `color`, `bio`), **no `status` column**
+- [ ] `coaches` extension table created (`institution_id`, `user_id`, `programs`, `availability`, `color`, `bio`), **no `status` column**
 - [ ] `UNIQUE (institution_id, user_id)` on `coaches`
 - [ ] RLS: members read; admins write; a coach can update **own** row (`user_id = auth.uid()`)
 - [ ] Optional `is_coach_of(institution_id)` helper added
@@ -224,7 +223,7 @@ a swatch picker on the Profile tab. Module 6 reads `coaches.color` for calendar 
 - [ ] Invite reuses `link_user_to_institution` (no `inviteUserByEmail`, no `/invite/[token]`)
 - [ ] Coach list unions active members (`role='coach'`) + pending allowlist rows, with correct badges
 - [ ] "Add Coach" sheet invites and the new coach appears as Pending
-- [ ] Coach detail Profile tab saves sports/bio/colour (upserts `coaches`)
+- [ ] Coach detail Profile tab saves programs/bio/colour (upserts `coaches`)
 - [ ] Availability grid saves the working-hours-shaped JSONB
 - [ ] Deactivate sets `institution_members.status='inactive'` (row not deleted); Reactivate restores
 - [ ] Colour auto-assigned from `COACH_COLORS`, admin override works

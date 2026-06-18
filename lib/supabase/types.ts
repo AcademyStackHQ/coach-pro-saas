@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      batch_students: {
+        Row: {
+          batch_id: string
+          created_at: string | null
+          enrolled_at: string | null
+          id: string
+          institution_id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string | null
+          enrolled_at?: string | null
+          id?: string
+          institution_id: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string | null
+          enrolled_at?: string | null
+          id?: string
+          institution_id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_students_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_students_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_students_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      batches: {
+        Row: {
+          capacity: number
+          coach_id: string | null
+          created_at: string | null
+          effective_from: string
+          id: string
+          institution_id: string
+          monthly_fee: number
+          name: string
+          program: string
+          schedule: Json
+          status: string
+          venue: string | null
+        }
+        Insert: {
+          capacity: number
+          coach_id?: string | null
+          created_at?: string | null
+          effective_from?: string
+          id?: string
+          institution_id: string
+          monthly_fee?: number
+          name: string
+          program: string
+          schedule?: Json
+          status?: string
+          venue?: string | null
+        }
+        Update: {
+          capacity?: number
+          coach_id?: string | null
+          created_at?: string | null
+          effective_from?: string
+          id?: string
+          institution_id?: string
+          monthly_fee?: number
+          name?: string
+          program?: string
+          schedule?: Json
+          status?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batches_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batches_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaches: {
         Row: {
           availability: Json | null
@@ -23,7 +135,7 @@ export type Database = {
           id: string
           institution_id: string
           joined_at: string | null
-          sports: string[] | null
+          programs: string[] | null
           user_id: string
         }
         Insert: {
@@ -34,7 +146,7 @@ export type Database = {
           id?: string
           institution_id: string
           joined_at?: string | null
-          sports?: string[] | null
+          programs?: string[] | null
           user_id: string
         }
         Update: {
@@ -45,7 +157,7 @@ export type Database = {
           id?: string
           institution_id?: string
           joined_at?: string | null
-          sports?: string[] | null
+          programs?: string[] | null
           user_id?: string
         }
         Relationships: [
@@ -166,9 +278,9 @@ export type Database = {
           name: string
           onboarding_complete: boolean | null
           plan: string | null
+          programs: string[] | null
           slug: string
           sms_credits: number | null
-          sports: string[] | null
           student_seq: number
           timezone: string | null
           working_hours: Json | null
@@ -186,9 +298,9 @@ export type Database = {
           name: string
           onboarding_complete?: boolean | null
           plan?: string | null
+          programs?: string[] | null
           slug: string
           sms_credits?: number | null
-          sports?: string[] | null
           student_seq?: number
           timezone?: string | null
           working_hours?: Json | null
@@ -206,9 +318,9 @@ export type Database = {
           name?: string
           onboarding_complete?: boolean | null
           plan?: string | null
+          programs?: string[] | null
           slug?: string
           sms_credits?: number | null
-          sports?: string[] | null
           student_seq?: number
           timezone?: string | null
           working_hours?: Json | null
@@ -253,19 +365,19 @@ export type Database = {
           gender: string | null
           id: string
           institution_id: string
-          jersey_name: string | null
-          jersey_number: number | null
-          jersey_size: string | null
           monthly_fee: number | null
           parent_email: string | null
           parent_mobile: string
           parent_name: string
           parent_user_id: string | null
           photo_url: string | null
+          programs: string[] | null
           sms_opt_in: boolean | null
-          sports: string[] | null
           status: string | null
           student_code: string | null
+          uniform_name: string | null
+          uniform_number: number | null
+          uniform_size: string | null
           user_id: string | null
         }
         Insert: {
@@ -278,19 +390,19 @@ export type Database = {
           gender?: string | null
           id?: string
           institution_id: string
-          jersey_name?: string | null
-          jersey_number?: number | null
-          jersey_size?: string | null
           monthly_fee?: number | null
           parent_email?: string | null
           parent_mobile: string
           parent_name: string
           parent_user_id?: string | null
           photo_url?: string | null
+          programs?: string[] | null
           sms_opt_in?: boolean | null
-          sports?: string[] | null
           status?: string | null
           student_code?: string | null
+          uniform_name?: string | null
+          uniform_number?: number | null
+          uniform_size?: string | null
           user_id?: string | null
         }
         Update: {
@@ -303,19 +415,19 @@ export type Database = {
           gender?: string | null
           id?: string
           institution_id?: string
-          jersey_name?: string | null
-          jersey_number?: number | null
-          jersey_size?: string | null
           monthly_fee?: number | null
           parent_email?: string | null
           parent_mobile?: string
           parent_name?: string
           parent_user_id?: string | null
           photo_url?: string | null
+          programs?: string[] | null
           sms_opt_in?: boolean | null
-          sports?: string[] | null
           status?: string | null
           student_code?: string | null
+          uniform_name?: string | null
+          uniform_number?: number | null
+          uniform_size?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -366,6 +478,7 @@ export type Database = {
         Returns: Json
       }
       next_student_code: { Args: { p_institution_id: string }; Returns: string }
+      owns_batch_coach: { Args: { p_coach_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
