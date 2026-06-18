@@ -354,6 +354,73 @@ export type Database = {
         }
         Relationships: []
       }
+      sessions: {
+        Row: {
+          coach_id: string
+          created_at: string | null
+          date: string
+          end_time: string
+          fee_override: number | null
+          id: string
+          institution_id: string
+          notes: string | null
+          start_time: string
+          status: string
+          student_id: string
+          venue: string | null
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string | null
+          date: string
+          end_time: string
+          fee_override?: number | null
+          id?: string
+          institution_id: string
+          notes?: string | null
+          start_time: string
+          status?: string
+          student_id: string
+          venue?: string | null
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string | null
+          date?: string
+          end_time?: string
+          fee_override?: number | null
+          id?: string
+          institution_id?: string
+          notes?: string | null
+          start_time?: string
+          status?: string
+          student_id?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           calling_name: string | null

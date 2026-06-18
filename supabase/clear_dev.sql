@@ -20,12 +20,16 @@
 BEGIN;
 
 -- 1. Empty every application table in one shot.
---    CASCADE follows FK chains (members, coaches, students, allowed
---    emails all reference institutions/profiles), so order doesn't
---    matter. RESTART IDENTITY resets any serial/identity sequences;
+--    CASCADE follows FK chains (members, coaches, students, batches,
+--    batch_students, sessions, allowed emails all reference
+--    institutions/profiles/coaches/students), so order doesn't matter.
+--    RESTART IDENTITY resets any serial/identity sequences;
 --    institution_members.student_seq lives on the institutions row,
 --    so truncating institutions already zeroes the student counter.
 TRUNCATE TABLE
+  public.sessions,
+  public.batch_students,
+  public.batches,
   public.students,
   public.coaches,
   public.institution_allowed_emails,

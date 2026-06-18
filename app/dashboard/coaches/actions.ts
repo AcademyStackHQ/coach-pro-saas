@@ -1,14 +1,15 @@
 'use server'
 
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createClient } from '@/lib/server'
 import type { Json } from '@/lib/supabase/types'
 import { planGuard, PlanLimitError } from '@/lib/planGuard'
 import { COACH_COLORS } from '@/lib/constants'
+import { sendCoachInviteEmail } from '@/lib/email'
 
-export type ActionState = { success?: boolean; error?: string }
+export type ActionState = { success?: boolean; error?: string; warning?: string }
 
 async function getInstitutionId(): Promise<string | null> {
   const cs = await cookies()
@@ -61,7 +62,7 @@ export async function inviteCoach(
     return { error: 'Could not verify plan limits. Please try again.' }
   }
 
-  const { error } = await supabase.rpc('link_user_to_institution', {
+  const { data, error } = await supabase.rpc('link_user_to_institution', {
     p_institution_id: institutionId,
     p_email: email,
     p_role: 'coach',
@@ -75,6 +76,37 @@ export async function inviteCoach(
   }
 
   revalidatePath('/dashboard/coaches')
+
+  // Only brand-new coaches (no account yet) need a signup invite — a coach who
+  // already has an account was linked immediately and can just sign in. The
+  // coach is already on the allowlist, so an email failure is a warning, not a
+  // hard error: surface it so the admin knows to follow up manually.
+  const status = (data as { status?: string } | null)?.status
+  if (status === 'pending') {
+    const { data: inst } = await supabase
+      .from('institutions')
+      .select('name')
+      .eq('id', institutionId)
+      .single()
+    const origin =
+      (await headers()).get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''
+
+    const sent = await sendCoachInviteEmail({
+      to: email,
+      academyName: inst?.name ?? 'your academy',
+      signupUrl: `${origin}/signup`,
+    })
+
+    if (!sent.ok) {
+      console.error('Coach invite email failed:', sent.error)
+      return {
+        success: true,
+        warning:
+          'Coach added, but the invite email could not be sent. Ask them to sign up at /signup.',
+      }
+    }
+  }
+
   return { success: true }
 }
 

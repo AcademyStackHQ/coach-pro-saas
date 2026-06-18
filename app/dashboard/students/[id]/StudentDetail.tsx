@@ -13,6 +13,8 @@ import {
   type LoginActionState,
 } from '../actions'
 import { ProgramsField } from '@/components/dashboard/ProgramsField'
+import { EventAgenda } from '@/components/dashboard/EventAgenda'
+import type { CalendarEvent } from '@/lib/calendar'
 import { GENDERS, UNIFORM_SIZES } from '@/lib/constants'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -47,6 +49,7 @@ export type StudentDetailData = {
     program: string
     status: 'active' | 'waitlisted'
   }[]
+  calendarEvents: CalendarEvent[]
 }
 
 const TABS = [
@@ -56,6 +59,7 @@ const TABS = [
   { id: 'uniform', label: 'Uniform' },
   { id: 'fees', label: 'Fees' },
   { id: 'batches', label: 'Batches' },
+  { id: 'schedule', label: 'Schedule' },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
@@ -573,6 +577,13 @@ export function StudentDetail({ data }: { data: StudentDetailData }) {
       {tab === 'uniform' && <UniformTab data={data} />}
       {tab === 'fees' && <FeesTab data={data} />}
       {tab === 'batches' && <BatchesTab data={data} />}
+      {tab === 'schedule' && (
+        <EventAgenda
+          events={data.calendarEvents}
+          title="Next 2 weeks"
+          empty="No sessions in the next two weeks."
+        />
+      )}
     </div>
   )
 }

@@ -12,7 +12,7 @@
 --                          + seeds automatically); use this file only if
 --                          you need to reset a remote/linked DB by hand.
 --
--- After running, re-apply migrations in order: 001 → 002 → 003 → …
+-- After running, re-apply migrations in order: 001 → 002 → … → 007.
 -- ============================================================
 
 -- 1. Drop everything in `public` (tables, functions, policies, indexes,

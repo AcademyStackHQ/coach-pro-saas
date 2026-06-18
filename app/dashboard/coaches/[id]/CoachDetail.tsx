@@ -17,6 +17,8 @@ import {
   type BatchSlot,
 } from '@/lib/constants'
 import { AvailabilityEditor } from '@/components/dashboard/AvailabilityEditor'
+import { EventAgenda } from '@/components/dashboard/EventAgenda'
+import type { CalendarEvent } from '@/lib/calendar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -44,6 +46,7 @@ export type CoachDetailData = {
     enrolled: number
     status: 'active' | 'inactive'
   }[]
+  calendarEvents: CalendarEvent[]
 }
 
 const TABS = [
@@ -248,16 +251,6 @@ function BatchesTab({ batches }: { batches: CoachDetailData['batches'] }) {
   )
 }
 
-function Placeholder({ module }: { module: string }) {
-  return (
-    <Card>
-      <CardContent className="py-12 text-center text-sm text-muted-foreground">
-        Available in {module}.
-      </CardContent>
-    </Card>
-  )
-}
-
 export function CoachDetail({ data }: { data: CoachDetailData }) {
   const [tab, setTab] = useState<TabId>('profile')
   const isActive = data.status === 'active'
@@ -334,7 +327,13 @@ export function CoachDetail({ data }: { data: CoachDetailData }) {
         </Card>
       )}
       {tab === 'batches' && <BatchesTab batches={data.batches} />}
-      {tab === 'calendar' && <Placeholder module="Module 6" />}
+      {tab === 'calendar' && (
+        <EventAgenda
+          events={data.calendarEvents}
+          title="Next 2 weeks"
+          empty="No sessions in the next two weeks."
+        />
+      )}
     </div>
   )
 }
