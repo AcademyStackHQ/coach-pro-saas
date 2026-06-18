@@ -11,6 +11,8 @@ import {
   Clock,
   CreditCard,
   GraduationCap,
+  IdCard,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -65,8 +67,10 @@ const COACH_NAV: NavItem[] = [
 
 const STUDENT_NAV: NavItem[] = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/profile", label: "My Profile", icon: IdCard },
   { href: "/dashboard/calendar", label: "My Schedule", icon: Calendar },
   { href: "/dashboard/fees", label: "My Fees", icon: CreditCard },
+  { href: "/dashboard/account", label: "Account", icon: KeyRound },
 ]
 
 function getNav(role: string): NavItem[] {

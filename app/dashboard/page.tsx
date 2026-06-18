@@ -1,9 +1,14 @@
 import { createClient } from "@/lib/server"
 import { getActiveSession } from "@/lib/activeSession"
+import { StudentOverview } from "./StudentOverview"
 
 export default async function DashboardPage() {
   // Role/institution verified against the membership row, not the cookie.
   const { userId, institutionId, role } = await getActiveSession()
+
+  // Students get a profile-centric overview (their own record + academy),
+  // not the admin/coach stat cards below.
+  if (role === "student") return <StudentOverview />
 
   const supabase = await createClient()
 
