@@ -26,7 +26,7 @@ Navigate to any module below for implementation details, API contracts, and stat
 | 3 | Coach Management | `✅ Done` | [→ details](./guides/03-coach-management.md) |
 | 4 | Student Management | `✅ Done` | [→ details](./guides/04-student-management.md) |
 | 5 | Batch Management | `✅ Done` | [→ details](./guides/05-batch-management.md) |
-| 6 | Calendar & Scheduling | `🔲 Pending` | [→ details](./guides/06-calendar-scheduling.md) |
+| 6 | Calendar & Scheduling | `✅ Done` | [→ details](./guides/06-calendar-scheduling.md) |
 | 7 | Fee Management | `🔲 Pending` | [→ details](./guides/07-fee-management.md) |
 | 8 | SMS Notifications | `🔲 Pending` | [→ details](./guides/08-sms-notifications.md) |
 
@@ -71,6 +71,7 @@ app/
   onboarding/            4-step first-run wizard (admin)
   dashboard/             one protected group; sidebar branches on the active_role cookie
     settings/  coaches/  coaches/[id]/  availability/  students/  students/[id]/
+    batches/  calendar/  fees/  account/  profile/
 components/
   dashboard/             sidebar, mobile header, AvailabilityEditor
   marketing/  ui/
@@ -78,7 +79,7 @@ lib/
   server.ts  client.ts  admin.ts  types.ts (supabase/)
   requireRole.ts  planGuard.ts  constants.ts  utils.ts
 proxy.ts                 auth guard + routing (replaces middleware.ts)
-supabase/migrations/     001 … 003 (apply in order)
+supabase/migrations/     001 … 007 (apply in order); reset_dev.sql / clear_dev.sql dev helpers
 docs/
   README.md              ← you are here
   guides/                ← numbered module dev guides

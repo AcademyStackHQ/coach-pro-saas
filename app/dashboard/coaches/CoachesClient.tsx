@@ -54,13 +54,14 @@ function initials(name: string) {
 function AddCoachSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(inviteCoach, {})
 
-  // Close automatically once an invite succeeds.
+  // Close automatically on a clean success — but keep the sheet open when the
+  // invite landed with a warning (e.g. email didn't send) so the admin sees it.
   useEffect(() => {
-    if (state.success) {
+    if (state.success && !state.warning) {
       const t = setTimeout(onClose, 600)
       return () => clearTimeout(t)
     }
-  }, [state.success, onClose])
+  }, [state.success, state.warning, onClose])
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
@@ -87,8 +88,13 @@ function AddCoachSheet({ open, onClose }: { open: boolean; onClose: () => void }
           </div>
 
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-          {state.success && (
-            <p className="text-sm font-medium text-green-600">Coach invited.</p>
+          {state.success && !state.warning && (
+            <p className="text-sm font-medium text-green-600">
+              Coach invited — we&apos;ve emailed them a signup link.
+            </p>
+          )}
+          {state.warning && (
+            <p className="text-sm font-medium text-amber-600">{state.warning}</p>
           )}
 
           <Button type="submit" disabled={pending} className="w-full">
