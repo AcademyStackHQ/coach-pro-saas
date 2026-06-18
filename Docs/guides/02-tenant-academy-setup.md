@@ -30,7 +30,7 @@ Step 1 is required. Steps 2–4 are skippable.
 | 1 — Academy Profile | Yes | Name (pre-filled), category, address, contact email/mobile, logo upload, timezone |
 | 2 — Add First Coach | Skippable | Full name, email, mobile |
 | 3 — Create First Batch | Skippable | Name, days, time, venue, monthly fee |
-| 4 — Enrol First Student | Skippable | Name, DOB, guardian name, guardian mobile (direct `students` record — not an email invite; see Module 4 identity model) |
+| 4 — Enrol First Student | Skippable | Name, DOB, parent name, parent mobile (direct `students` record — not an email invite; see Module 4 identity model) |
 
 On completion: set `institutions.onboarding_complete = true` → redirect to `/dashboard`.
 
@@ -97,18 +97,21 @@ Free tier limits:
 
 ## Database Changes
 
-No new tables. Uses existing `institutions` table columns added in Migration 001:
+No new tables. All columns used by this module are part of `001_foundation.sql`:
 
 | Column | Used by |
 |---|---|
 | `logo_url` | Academy Profile tab, onboarding Step 1 |
+| `category` | Academy Profile tab |
+| `address` | Academy Profile tab |
+| `contact_email` | Academy Profile tab |
+| `contact_mobile` | Academy Profile tab |
 | `timezone` | Academy Profile tab |
 | `working_hours` (JSONB) | Working Hours tab |
+| `fee_config` (JSONB) | Fee Settings tab |
 | `plan` | Subscription tab, planGuard() |
 | `sms_credits` | SMS Settings tab |
 | `onboarding_complete` | Wizard trigger — false = show wizard |
-
-**Migration needed:** Add `address`, `contact_email`, `contact_mobile`, `fee_config` (JSONB) columns to `institutions`.
 
 ---
 

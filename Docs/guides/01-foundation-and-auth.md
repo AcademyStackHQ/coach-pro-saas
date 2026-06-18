@@ -8,13 +8,13 @@
 
 ## What This Module Delivers
 
-- Next.js 14 project scaffold with TypeScript, Tailwind, shadcn/ui
+- Next.js 16 project scaffold with TypeScript, Tailwind, shadcn/ui
 - Supabase project wired up with typed client helpers
 - Core database tables (`institutions`, `profiles`, `institution_members`, `institution_allowed_emails`) with RLS
 - Supabase Storage buckets provisioned
 - Institution registration, student self-signup, and login pages
 - Institution chooser modal (shown when user belongs to multiple institutions)
-- `middleware.ts` — auth guard + role-based routing + active institution validation
+- `proxy.ts` — auth guard + routing (replaces `middleware.ts`)
 - GitHub Actions CI pipeline (lint + typecheck)
 - Vercel project connected to repo
 
@@ -30,12 +30,19 @@
 | `name` | `TEXT NOT NULL UNIQUE` | Globally unique institution name |
 | `slug` | `TEXT UNIQUE NOT NULL` | URL-friendly name, e.g. `tigers-academy` |
 | `logo_url` | `TEXT` | Supabase Storage public URL |
+| `category` | `TEXT` | Academy type (e.g. `cricket`, `multi-sport`) |
+| `address` | `TEXT` | Full address |
+| `contact_email` | `TEXT` | Public contact email |
+| `contact_mobile` | `TEXT` | Public contact mobile (E.164) |
 | `sports` | `TEXT[]` | e.g. `['cricket', 'football']` |
 | `timezone` | `TEXT DEFAULT 'Asia/Kolkata'` | |
 | `plan` | `TEXT DEFAULT 'free'` | `free` \| `pro` \| `enterprise` |
 | `sms_credits` | `INT DEFAULT 0` | |
-| `working_hours` | `JSONB` | `{ mon: [{start, end}], ... }` |
+| `working_hours` | `JSONB DEFAULT '{}'` | `{ mon: [{start, end}], ... }` |
+| `fee_config` | `JSONB DEFAULT '{}'` | Fee rules (grace period, late-fee penalty, payment modes) |
 | `onboarding_complete` | `BOOL DEFAULT false` | triggers wizard on first login |
+| `code` | `TEXT UNIQUE` | auto-generated academy code (e.g. `MVA`); prefixes every student code |
+| `student_seq` | `INT DEFAULT 0` | atomic per-institution counter; bumped by `next_student_code()` |
 | `created_at` | `TIMESTAMPTZ DEFAULT now()` | |
 
 ### `profiles`
@@ -153,7 +160,7 @@ SMS_WEBHOOK_SECRET                        # Server only (Module 8)
 | Route | File | Description |
 |---|---|---|
 | `/register` | `app/(auth)/register/page.tsx` | New institution registration (admin) |
-| `/login` | `app/(auth)/login/page.tsx` | Email + password login |
+| `/login` | `app/(auth)/login/page.tsx` | Email **or student code** + password login |
 | `/signup` | `app/(auth)/signup/page.tsx` | Student / coach self-signup |
 | `/no-access` | `app/(auth)/no-access/page.tsx` | Shown when user has no institution |
 
@@ -181,7 +188,9 @@ SMS_WEBHOOK_SECRET                        # Server only (Module 8)
 
 ## Login Flow
 
-1. User enters email + password → `supabase.auth.signInWithPassword()`
+1. User enters **email or student code** + password. An identifier without `@` is treated as a student
+   code and mapped to its synthetic email (`studentLoginEmail()`) before `supabase.auth.signInWithPassword()`
+   — see [Module 4 — Student-Code Login](./04-student-management.md#student-code-login--migration-008)
 2. App queries `institution_members WHERE user_id = auth.uid()`
 3. **0 institutions** → redirect to `/no-access`
 4. **1 institution** → store `active_institution_id` + `active_role` in cookie → redirect to `/(dashboard)`
@@ -207,7 +216,7 @@ Every server component, route handler, and API call reads `active_institution_id
 
 ---
 
-## Middleware (`middleware.ts`)
+## Auth Guard (`proxy.ts`)
 
 Runs on every request. Executes in this order:
 
@@ -240,9 +249,9 @@ import { createServerClient } from '@supabase/ssr'
 import { createBrowserClient } from '@supabase/ssr'
 ```
 
-**`lib/supabase/types.ts`** — Generated via:
+**`lib/supabase/types.ts`** — Generated via Bash (not PowerShell — PowerShell writes UTF-16+BOM):
 ```bash
-npx supabase gen types typescript --project-id <id> > lib/supabase/types.ts
+npx supabase gen types typescript --project-id <project-id> > lib/supabase/types.ts
 ```
 
 ---
@@ -312,8 +321,8 @@ Merge to `main` is blocked if either check fails.
 - [x] `/no-access` page shown when user has 0 institutions
 - [x] `active_institution_id` + `active_role` stored in httpOnly cookie after institution selection
 - [ ] Institution switcher in navbar updates active institution without re-login
-- [ ] `middleware.ts` blocks unauthenticated access
-- [ ] Middleware validates user is still a member of `active_institution_id`
+- [ ] `proxy.ts` blocks unauthenticated access
+- [ ] Auth guard validates user is still a member of `active_institution_id`
 - [ ] Role-based routing works (admin / coach / student route groups)
 - [x] Supabase typed client helpers (`lib/server.ts`, `lib/client.ts`, `lib/supabase/types.ts`)
 - [ ] GitHub Actions CI passes on a test PR

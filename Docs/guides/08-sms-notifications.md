@@ -51,9 +51,9 @@ Apply RLS to both tables.
 ```sql
 INSERT INTO sms_templates (tenant_id, name, body) VALUES
   ($tenantId, 'fee_reminder',
-   'Hi {guardian_name}, fees of Rs.{amount_due} for {student_name} ({batch_name}) for {month} are due by {due_date}. - {academy_name}'),
+   'Hi {parent_name}, fees of Rs.{amount_due} for {student_name} ({batch_name}) for {month} are due by {due_date}. - {academy_name}'),
   ($tenantId, 'payment_confirmation',
-   'Hi {guardian_name}, payment of Rs.{amount_paid} for {student_name} received on {payment_date}. Receipt: {receipt_url}. - {academy_name}');
+   'Hi {parent_name}, payment of Rs.{amount_paid} for {student_name} received on {payment_date}. Receipt: {receipt_url}. - {academy_name}');
 ```
 
 ---
@@ -62,7 +62,7 @@ INSERT INTO sms_templates (tenant_id, name, body) VALUES
 
 | Token | Resolved from |
 |---|---|
-| `{guardian_name}` | `students.guardian_name` |
+| `{parent_name}` | `students.parent_name` |
 | `{student_name}` | `students.full_name` |
 | `{batch_name}` | `batches.name` |
 | `{month}` | `fee_ledger.month_year` formatted as "July 2025" |
