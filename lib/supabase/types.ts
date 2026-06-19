@@ -773,7 +773,7 @@ export type Database = {
     }
     Functions: {
       decrement_sms_credits: {
-        Args: { p_institution_id: string; p_count: number }
+        Args: { p_count: number; p_institution_id: string }
         Returns: number
       }
       generate_institution_code: { Args: { p_name: string }; Returns: string }
@@ -802,11 +802,11 @@ export type Database = {
       owns_batch_coach: { Args: { p_coach_id: string }; Returns: boolean }
       record_fee_payment: {
         Args: {
-          p_ledger_id: string
           p_amount: number
+          p_ledger_id: string
           p_mode: string
-          p_paid_at: string | null
-          p_notes: string | null
+          p_notes: string
+          p_paid_at: string
           p_recorded_by: string
         }
         Returns: string
