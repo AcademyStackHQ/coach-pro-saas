@@ -805,8 +805,8 @@ export type Database = {
           p_amount: number
           p_ledger_id: string
           p_mode: string
-          p_notes: string
-          p_paid_at: string
+          p_notes: string | null
+          p_paid_at: string | null
           p_recorded_by: string
         }
         Returns: string
