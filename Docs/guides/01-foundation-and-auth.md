@@ -138,7 +138,6 @@ Handled in the app (not a trigger). When admin adds an email:
 |---|---|---|
 | `academy-logos` | Public read | Tenant branding |
 | `profile-photos` | Signed URL | Coach / student photos |
-| `receipts` | Signed URL | PDF fee receipts (Module 7) |
 
 ---
 
@@ -313,7 +312,7 @@ Merge to `main` is blocked if either check fails.
 - [x] DB trigger — institution admin signup creates institution + profile + member row
 - [x] DB trigger — student signup checks allowed emails and links to institutions
 - [x] Admin add-existing-user flow immediately inserts into `institution_members` (via `link_user_to_institution` RPC)
-- [ ] Storage buckets created (`academy-logos`, `profile-photos`, `receipts`)
+- [ ] Storage buckets created (`academy-logos`, `profile-photos`)
 - [x] `/register` page creates institution + admin profile
 - [ ] `/signup` page creates student profile and auto-links via trigger
 - [x] `/login` page signs in, queries institution count, redirects correctly

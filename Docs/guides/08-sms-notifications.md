@@ -53,7 +53,7 @@ INSERT INTO sms_templates (tenant_id, name, body) VALUES
   ($tenantId, 'fee_reminder',
    'Hi {parent_name}, fees of Rs.{amount_due} for {student_name} ({batch_name}) for {month} are due by {due_date}. - {academy_name}'),
   ($tenantId, 'payment_confirmation',
-   'Hi {parent_name}, payment of Rs.{amount_paid} for {student_name} received on {payment_date}. Receipt: {receipt_url}. - {academy_name}');
+   'Hi {parent_name}, payment of Rs.{amount_paid} for {student_name} received on {payment_date}. Receipt no: {receipt_number}. - {academy_name}');
 ```
 
 ---
@@ -70,7 +70,7 @@ INSERT INTO sms_templates (tenant_id, name, body) VALUES
 | `{amount_paid}` | `fee_payments.amount / 100` (INR) |
 | `{due_date}` | `fee_ledger.due_date` formatted as "10 Jul 2025" |
 | `{payment_date}` | `fee_payments.paid_at` |
-| `{receipt_url}` | Short URL to receipt PDF |
+| `{receipt_number}` | `fee_payments.receipt_number` (reference number) |
 | `{academy_name}` | `tenants.name` |
 
 ---

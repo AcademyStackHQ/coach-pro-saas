@@ -42,6 +42,14 @@ export type StudentDetailData = {
   uniform_name: string | null
   monthly_fee: number | null
   deposit_amount: number | null
+  feeInvoices: {
+    id: string
+    monthLabel: string
+    amountDue: number
+    amountPaid: number
+    balance: number
+    status: 'pending' | 'partial' | 'paid' | 'waived'
+  }[]
   institutionPrograms: string[]
   batches: {
     id: string
@@ -338,12 +346,50 @@ function FeesTab({ data }: { data: StudentDetailData }) {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            These are the student&apos;s default fee amounts. The full payment ledger
-            (invoices, receipts, history) arrives in Module 7.
+            These are the student&apos;s default fee amounts, used when generating monthly
+            invoices. Manage payments from the{' '}
+            <Link href="/dashboard/fees" className="underline">
+              Fees
+            </Link>{' '}
+            dashboard.
           </p>
 
           <SaveRow state={state} pending={pending} />
         </form>
+
+        <div className="mt-6 border-t pt-4">
+          <p className="mb-2 text-sm font-medium">Invoice history</p>
+          {data.feeInvoices.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No invoices yet.</p>
+          ) : (
+            <ul className="divide-y rounded-lg border text-sm">
+              {data.feeInvoices.map((inv) => (
+                <li key={inv.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <span className="font-medium">{inv.monthLabel}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Due ₹{paiseToRupees(inv.amountDue) || '0'} · Paid ₹
+                    {paiseToRupees(inv.amountPaid) || '0'} · Balance ₹
+                    {paiseToRupees(inv.balance) || '0'}
+                  </span>
+                  <span
+                    className={cn(
+                      'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize',
+                      inv.status === 'paid'
+                        ? 'bg-green-50 text-green-700'
+                        : inv.status === 'partial'
+                          ? 'bg-blue-50 text-blue-700'
+                          : inv.status === 'waived'
+                            ? 'bg-muted text-muted-foreground'
+                            : 'bg-amber-50 text-amber-700'
+                    )}
+                  >
+                    {inv.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </CardContent>
     </Card>
   )

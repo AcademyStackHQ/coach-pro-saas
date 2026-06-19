@@ -122,7 +122,7 @@ uniform fields, `monthly_fee`, `deposit_amount` (paise), `sms_opt_in`, and the t
 
 The two optional per-student fee fields — `monthly_fee` and `deposit_amount` (one-time advance /
 security deposit) — are `INT` in **paise** and nullable. These are student-level defaults; the payment
-ledger (invoices, receipts) is Module 7.
+ledger (invoices, payments) is Module 7.
 
 **Uniqueness & duplicates** — names/DOB are *not* unique; the student code is:
 - **No** hard `UNIQUE` on `(institution_id, full_name, dob)` — names collide; a hard key would reject

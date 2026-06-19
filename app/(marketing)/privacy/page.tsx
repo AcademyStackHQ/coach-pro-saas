@@ -54,7 +54,7 @@ export default function PrivacyPage() {
             <li>To provide, maintain, and improve the CoachPro service.</li>
             <li>
               To process payments and send transactional messages such as fee
-              reminders and receipts.
+              reminders and payment confirmations.
             </li>
             <li>To respond to support requests and secure your account.</li>
           </ul>

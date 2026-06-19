@@ -8,9 +8,11 @@ import {
   today,
   addDays,
   ymd,
+  parseYmd,
   type BatchForOccurrence,
   type SessionRow,
 } from '@/lib/calendar'
+import { monthLabel } from '@/lib/fees'
 import { StudentDetail, type StudentDetailData } from './StudentDetail'
 
 export const metadata = { title: 'Student — CoachPro' }
@@ -127,6 +129,24 @@ export default async function StudentPage({
 
   const calendarEvents = buildEvents(batchesForOcc, sessionRows, from, to)
 
+  // ----- Fees tab: recent invoice history for this student -----
+  const { data: ledgerRows } = await supabase
+    .from('fee_ledger')
+    .select('id, month_year, amount_due, amount_paid, balance, status')
+    .eq('institution_id', institutionId)
+    .eq('student_id', id)
+    .order('month_year', { ascending: false })
+    .limit(12)
+
+  const feeInvoices: StudentDetailData['feeInvoices'] = (ledgerRows ?? []).map((l) => ({
+    id: l.id,
+    monthLabel: monthLabel(parseYmd(l.month_year) ?? today()),
+    amountDue: l.amount_due,
+    amountPaid: l.amount_paid,
+    balance: l.balance ?? 0,
+    status: l.status as StudentDetailData['feeInvoices'][number]['status'],
+  }))
+
   const data: StudentDetailData = {
     id: student.id,
     status: student.status === 'inactive' ? 'inactive' : 'active',
@@ -147,6 +167,7 @@ export default async function StudentPage({
     uniform_name: student.uniform_name,
     monthly_fee: student.monthly_fee,
     deposit_amount: student.deposit_amount,
+    feeInvoices,
     institutionPrograms: institution?.programs ?? [],
     batches,
     calendarEvents,

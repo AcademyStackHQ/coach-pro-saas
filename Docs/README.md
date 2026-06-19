@@ -27,7 +27,7 @@ Navigate to any module below for implementation details, API contracts, and stat
 | 4 | Student Management | `✅ Done` | [→ details](./guides/04-student-management.md) |
 | 5 | Batch Management | `✅ Done` | [→ details](./guides/05-batch-management.md) |
 | 6 | Calendar & Scheduling | `✅ Done` | [→ details](./guides/06-calendar-scheduling.md) |
-| 7 | Fee Management | `🔲 Pending` | [→ details](./guides/07-fee-management.md) |
+| 7 | Fee Management | `🚧 In Progress` | [→ details](./guides/07-fee-management.md) |
 | 8 | SMS Notifications | `🔲 Pending` | [→ details](./guides/08-sms-notifications.md) |
 
 > Module 0 (Marketing Site) is independent and can be built in parallel with Module 1.
@@ -55,7 +55,7 @@ Navigate to any module below for implementation details, API contracts, and stat
 - **Backend:** Next.js Server Actions · Supabase RPCs (route handlers added per-need)
 - **Database:** Supabase PostgreSQL · Row Level Security
 - **Auth:** Supabase Auth (email/password) — admins/coaches via an email allowlist + signup trigger; **students via an opt-in student code** mapped to a synthetic email (no custom auth)
-- **Storage:** Supabase Storage (logos · photos · PDF receipts)
+- **Storage:** Supabase Storage (logos · photos)
 - **Deploy:** Vercel (CI/CD · preview deploys · cron jobs)
 - **SMS:** MSG91 (swappable via `SMS_GATEWAY` env var)
 

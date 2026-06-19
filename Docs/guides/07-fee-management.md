@@ -1,6 +1,6 @@
 ﻿# Module 7 — Fee Management
 
-**Status:** `🔲 Pending`
+**Status:** `🚧 In Progress` (built — apply migration `008_fees.sql` + set `CRON_SECRET` to go live)
 **Priority:** 7 of 8
 **Back to index:** [docs/README.md](../README.md)
 
@@ -8,13 +8,26 @@
 
 ## What This Module Delivers
 
-- Monthly fee ledger auto-generated on 1st of each month (Vercel Cron)
-- Fee proration for mid-month enrolments
-- Payment recording (cash, UPI, card, cheque)
-- PDF receipt generation + Supabase Storage upload
-- Fee dashboard with collection stats
-- Defaulters list with one-click SMS trigger (bridges to Module 8)
-- Payment void support
+- Monthly fee ledger, generated idempotently per month (admin button + cron endpoint)
+- Payment recording (cash, UPI, card, cheque) with sequential receipt numbers
+- Fee dashboard with collection stats (collected / outstanding / overdue / rate)
+- Defaulters/invoice list — one-click SMS trigger bridges to Module 8 (hook left, not wired)
+- Payment void + invoice waive support
+
+> **As built (reconciliation — the spec below predates the build):** the live app uses
+> `institution_id`/`institutions` (not `tenant_id`/`tenants`) and **server actions**, not the
+> `/api/fees/*` REST routes sketched below. Billing is **per-student flat**: one `fee_ledger`
+> row per `(institution, student, month_year)` with `amount_due = students.monthly_fee`
+> (`batch_id` column reserved but unused). Generation lives in `lib/fees.ts#generateLedger`,
+> called by the admin **Generate invoices** button (`generateMonth` action) and the
+> `POST/GET /api/cron/generate-ledger` route (Vercel Cron, `CRON_SECRET` bearer). Mid-month
+> **proration is deferred** (full month billed). Receipt numbers come from the
+> `next_receipt_number` RPC; there is **no PDF**.
+
+> **Not in the near roadmap:** PDF receipt generation + Supabase Storage upload is
+> deliberately deferred. Payments still get a sequential `receipt_number` reference,
+> but no PDF file is generated or stored. Revisit later if academies ask for printable
+> receipts.
 
 ---
 
@@ -46,8 +59,7 @@
 | `amount` | `INT NOT NULL` | in **paise** |
 | `paid_at` | `TIMESTAMPTZ NOT NULL` | |
 | `payment_mode` | `TEXT NOT NULL` | `cash` \| `upi` \| `card` \| `cheque` |
-| `receipt_number` | `TEXT UNIQUE` | sequential per tenant, e.g. `RCP-2025-0042` |
-| `receipt_url` | `TEXT` | 7-day signed URL to PDF in Storage |
+| `receipt_number` | `TEXT UNIQUE` | sequential per tenant, e.g. `RCP-2025-0042` (reference number only — no PDF) |
 | `recorded_by` | `UUID FK → profiles` | admin who recorded this |
 | `voided_at` | `TIMESTAMPTZ` | NULL = active; non-null = voided |
 
@@ -106,31 +118,10 @@ This endpoint is also callable manually by admin from the UI.
    - `amount_paid = 0` → `pending`
    - `0 < amount_paid < amount_due` → `partial`
    - `amount_paid >= amount_due` → `paid`
-7. Generate PDF receipt (see below)
-8. Upload PDF to Supabase Storage
-9. Update `fee_payments.receipt_url` with signed URL
-10. Return payment record + receipt URL
+7. Return payment record (with `receipt_number`)
 
----
-
-## PDF Receipt
-
-### Content
-- Academy logo + name
-- Receipt number + date
-- Student name + batch name
-- Month
-- Amount paid (formatted as INR)
-- Payment mode
-- Amount due / balance
-- Recorded by (admin name)
-- "Paid" stamp if balance = 0
-
-### Generation
-Use `@react-pdf/renderer` (server-side, no browser required) or Puppeteer (heavier but full HTML→PDF).
-
-**Storage path:** `receipts/{tenant_id}/{YYYY}/{MM}/{receipt_number}.pdf`
-**Signed URL TTL:** 7 days (regenerate on access if expired)
+> **PDF receipts are deferred** — see the note at the top of this doc. No PDF is
+> generated or uploaded; the `receipt_number` is the only receipt artefact for now.
 
 ---
 
@@ -141,9 +132,8 @@ Use `@react-pdf/renderer` (server-side, no browser required) or Puppeteer (heavi
 | `GET` | `/api/fees` | Dashboard summary (collected, outstanding, overdue, rate) |
 | `GET` | `/api/fees/ledger` | Paginated ledger. Filters: student, batch, month, status |
 | `POST` | `/api/fees/ledger/generate` | Manual trigger for monthly generation |
-| `POST` | `/api/fees/payments` | Record payment + generate receipt |
+| `POST` | `/api/fees/payments` | Record payment (assigns `receipt_number`) |
 | `DELETE` | `/api/fees/payments/[id]` | Void payment (sets `voided_at`, reverses `amount_paid`) |
-| `GET` | `/api/fees/receipts/[id]` | Return fresh signed URL for PDF |
 
 ---
 
@@ -182,7 +172,7 @@ Fields:
 - Date (defaults to today)
 - Notes (optional)
 
-On submit → calls `POST /api/fees/payments` → on success, shows receipt link.
+On submit → calls `POST /api/fees/payments` → on success, shows the payment confirmation + `receipt_number`.
 
 ---
 
@@ -195,8 +185,6 @@ On submit → calls `POST /api/fees/payments` → on success, shows receipt link
 - [ ] Fee proration calculates correctly for mid-month enrolments
 - [ ] Payment recording updates `amount_paid` and recalculates `status`
 - [ ] `receipt_number` is sequential and unique per tenant
-- [ ] PDF receipt generates and uploads to Supabase Storage
-- [ ] Signed URL is valid and returned to client
 - [ ] Fee dashboard summary cards show correct figures for current month
 - [ ] Defaulters list filters by month, batch, status
 - [ ] "Record Payment" modal works end-to-end
