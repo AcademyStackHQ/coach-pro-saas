@@ -117,8 +117,9 @@ Built on Supabase Auth — **no custom auth**. The mechanism:
 `students` keyed on `institution_id` (mirrors `002_coaches.sql`). Key columns: `full_name`,
 `calling_name`, `dob`, `gender`, `parent_name`, `parent_mobile`, `parent_email` (**no unique
 constraint**), `programs TEXT[]`, `enrolment_date`, `status` (`active`/`inactive`), `student_code`,
-uniform fields, `monthly_fee`, `deposit_amount` (paise), `sms_opt_in`, and the two nullable login FKs
-(`user_id`, `parent_user_id`).
+uniform fields, `monthly_fee`, `deposit_amount` (paise), `contact_channel` (`sms`/`whatsapp`/`both` —
+messaging preference; the legacy `sms_opt_in` is retained but no longer read), and the two nullable
+login FKs (`user_id`, `parent_user_id`).
 
 The two optional per-student fee fields — `monthly_fee` and `deposit_amount` (one-time advance /
 security deposit) — are `INT` in **paise** and nullable. These are student-level defaults; the payment
@@ -196,7 +197,7 @@ Enabling a student login inserts a `role='student'` member row, but because the 
 ### `/dashboard/students/[id]` — detail (`page.tsx` + `StudentDetail.tsx`)
 - `requireRole('admin')`. Native button tabs (Tabs primitive not installed):
   1. **Profile** — name, calling name, dob, gender, enrolment date, programs. **Student code is read-only** (auto-assigned login handle).
-  2. **Parent** — name, mobile, email, `sms_opt_in` toggle.
+  2. **Parent** — name, mobile, email, `contact_channel` selector (SMS / WhatsApp / both).
   3. **Login** — shows the student code + login status; **Enable login** (set password) when none exists, else **Reset password**. Opt-in, any age.
   4. **Uniform** — size, number, name.
   5. **Fees** — monthly fee + advance/deposit (₹ inputs → stored in paise); note that the full ledger is Module 7.

@@ -28,7 +28,7 @@ Navigate to any module below for implementation details, API contracts, and stat
 | 5 | Batch Management | `✅ Done` | [→ details](./guides/05-batch-management.md) |
 | 6 | Calendar & Scheduling | `✅ Done` | [→ details](./guides/06-calendar-scheduling.md) |
 | 7 | Fee Management | `🚧 In Progress` | [→ details](./guides/07-fee-management.md) |
-| 8 | SMS Notifications | `🔲 Pending` | [→ details](./guides/08-sms-notifications.md) |
+| 8 | SMS Notifications | `🚧 In Progress` | [→ details](./guides/08-sms-notifications.md) |
 
 > Module 0 (Marketing Site) is independent and can be built in parallel with Module 1.
 > Modules 1–8 must be completed in sequence — each depends on the one before it.

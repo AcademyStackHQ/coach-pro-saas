@@ -1,6 +1,6 @@
 ﻿# Module 8 — SMS Notifications
 
-**Status:** `🔲 Pending`
+**Status:** `🚧 In Progress` (built — apply migration `009_sms.sql`; runs on a dev no-op gateway until `SMS_GATEWAY=msg91`)
 **Priority:** 8 of 8 — final MVP module
 **Back to index:** [docs/README.md](../README.md)
 
@@ -8,12 +8,33 @@
 
 ## What This Module Delivers
 
-- Manual SMS send (single or bulk) to guardians
-- Editable SMS templates with placeholder tokens
-- SMS log table — full send history with delivery status
-- HMAC-verified delivery webhook from MSG91
-- Credit tracking — decrement on send, low-credit alert
-- Opt-out enforcement (`students.sms_opt_in`)
+- Bulk fee reminders from the Fees dashboard (multi-select defaulters)
+- **Multi-channel: SMS + WhatsApp**, routed by a per-student preference
+- Editable message templates with placeholder tokens
+- Message log table — full send history (per channel)
+- Credit tracking — decrement on send, low-credit banner
+
+> **As built (reconciliation — the spec below predates the build):** uses
+> `institution_id`/`institutions` (not `tenant_id`/`tenants`). The send is a **server action**
+> (`app/dashboard/sms/actions.ts#sendFeeReminders`) invoked from `FeesClient`, not a
+> `POST /api/sms/send` route.
+>
+> **Multi-channel (SMS + WhatsApp):** each student has a `students.contact_channel`
+> preference (`sms` | `whatsapp` | `both`; `both` = two messages), set by the admin on the
+> Add-Student form + Parent tab and **self-editable by the student in My Profile**. It is the
+> single routing + consent control — the legacy `sms_opt_in` column is **retired from the send
+> path** (kept in the schema, no longer read). The messaging layer is **`lib/messaging`**:
+> channel- and provider-aware, env-selected (`SMS_PROVIDER` / `WHATSAPP_PROVIDER`), with a
+> **`mock` provider as the default** (logs `[msg:mock:<channel>]`, no real send). A real vendor
+> (MSG91/Meta/Twilio) is one registry entry in `lib/messaging/index.ts#providerFor` — no call-site
+> change. `sms_logs` gained a `channel` column; one row per message.
+>
+> Token resolution is `lib/messaging/tokens.ts#resolveTemplate` (reuses `paiseToRupees`/`monthLabel`/
+> `smsDateLabel`). Credits **decrement per message (floored at 0) but never block** — no top-up
+> flow; a banner shows at ≤ 20. Templates are seeded per institution by a trigger in `009_sms.sql`
+> (existing academies backfilled). **Deferred:** the HMAC delivery webhook (columns
+> `gateway_ref`/`delivered_at` reserved), auto payment-confirmation, real providers + WhatsApp
+> template/HSM approval, and a separate WhatsApp number (reuses `parent_mobile`).
 
 ---
 
