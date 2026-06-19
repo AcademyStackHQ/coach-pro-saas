@@ -95,6 +95,15 @@ export function today(): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
 }
 
+/** "10 Jul 2026" — compact date label for SMS (due dates, payment dates). */
+export function smsDateLabel(d: Date): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(d)
+}
+
 export function addDays(d: Date, n: number): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
 }

@@ -4,7 +4,7 @@
 --
 -- A `coaches` row is NOT an identity — it extends an existing
 -- institution_members row (role='coach') with coaching-specific
--- attributes (sports, availability, calendar colour).
+-- attributes (programs, availability, calendar colour).
 -- Active/inactive status lives in institution_members.status,
 -- NOT here, so there is one source of truth.
 -- ============================================================
@@ -18,7 +18,7 @@ CREATE TABLE public.coaches (
   id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   institution_id UUID        NOT NULL REFERENCES public.institutions(id) ON DELETE CASCADE,
   user_id        UUID        NOT NULL REFERENCES public.profiles(id)     ON DELETE CASCADE,
-  sports         TEXT[]      DEFAULT '{}',
+  programs       TEXT[]      DEFAULT '{}',
   -- { "mon": [{ "start": "06:00", "end": "09:00" }], "tue": [], ... }
   availability   JSONB       DEFAULT '{}',
   color          TEXT,                      -- hex colour for the calendar lane (Module 6)

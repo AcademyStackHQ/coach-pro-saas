@@ -8,6 +8,11 @@ import {
   type ActionState,
 } from './actions'
 import {
+  updateSmsTemplate,
+  type ActionState as SmsActionState,
+} from '../sms/actions'
+import { resolveTemplate, SAMPLE_TOKENS } from '@/lib/messaging/tokens'
+import {
   INSTITUTION_CATEGORIES,
   DAYS,
   DEFAULT_WORKING_HOURS,
@@ -39,6 +44,16 @@ export type SettingsData = {
   sms_credits: number | null
   student_count: number
   coach_count: number
+  smsTemplates: { name: string; body: string }[]
+  smsLogs: {
+    id: string
+    studentName: string | null
+    mobile: string
+    message: string
+    status: string
+    channel: string
+    sentAt: string
+  }[]
 }
 
 const TABS = [
@@ -351,36 +366,189 @@ function FeesTab({ data, state, action, pending }: {
   )
 }
 
-function SmsTab({ data }: { data: SettingsData }) {
+const SMS_TOKENS = [
+  'parent_name',
+  'student_name',
+  'batch_name',
+  'month',
+  'amount_due',
+  'amount_paid',
+  'due_date',
+  'payment_date',
+  'receipt_number',
+  'academy_name',
+] as const
+
+function TemplateEditor({ name, body }: { name: string; body: string }) {
+  const [state, action, pending] = useActionState<SmsActionState, FormData>(
+    updateSmsTemplate,
+    {}
+  )
+  const [text, setText] = useState(body)
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>SMS Settings</CardTitle>
-        <CardDescription>
-          CoachPro sends SMS via MSG91. Credits are deducted per message sent.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
-          <div>
-            <p className="text-sm font-medium">Available Credits</p>
-            <p className="text-3xl font-bold mt-0.5">{data.sms_credits ?? 0}</p>
+    <div className="rounded-lg border p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium font-mono">{name}</p>
+        <span className="text-xs text-muted-foreground">{text.length} chars</span>
+      </div>
+      <form action={action} className="space-y-3">
+        <input type="hidden" name="name" value={name} />
+        <textarea
+          name="body"
+          rows={3}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+        <div className="flex flex-wrap gap-1">
+          {SMS_TOKENS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setText((prev) => `${prev}{${t}}`)}
+              className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground hover:bg-muted/70"
+            >
+              {`{${t}}`}
+            </button>
+          ))}
+        </div>
+        <div className="rounded-md bg-muted/40 p-2 text-xs">
+          <span className="text-muted-foreground">Preview: </span>
+          {resolveTemplate(text, SAMPLE_TOKENS)}
+        </div>
+        <div className="flex items-center justify-between">
+          <SaveFeedback state={state} />
+          <Button type="submit" size="sm" disabled={pending} className="ml-auto">
+            {pending ? 'Saving…' : 'Save'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+const LOG_BADGE: Record<string, string> = {
+  sent: 'bg-amber-50 text-amber-700',
+  delivered: 'bg-green-50 text-green-700',
+  failed: 'bg-destructive/10 text-destructive',
+}
+
+function SmsTab({ data }: { data: SettingsData }) {
+  const [logFilter, setLogFilter] = useState<'all' | 'sent' | 'delivered' | 'failed'>('all')
+  const credits = data.sms_credits ?? 0
+  const lowCredit = credits <= 20
+
+  const logs =
+    logFilter === 'all' ? data.smsLogs : data.smsLogs.filter((l) => l.status === logFilter)
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>SMS Settings</CardTitle>
+          <CardDescription>
+            Credits are deducted per message sent. Set{' '}
+            <code className="bg-muted px-1 py-0.5 rounded text-xs">SMS_GATEWAY=msg91</code>{' '}
+            (+ MSG91 keys) to send live; unset uses a dev no-op gateway.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
+            <div>
+              <p className="text-sm font-medium">Available Credits</p>
+              <p className="text-3xl font-bold mt-0.5">{credits}</p>
+            </div>
           </div>
-        </div>
+          {lowCredit && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              Low SMS credits ({credits}). Top up to keep sending reminders.
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        <Separator />
+      <Card>
+        <CardHeader>
+          <CardTitle>Message Templates</CardTitle>
+          <CardDescription>
+            Edit the message bodies. Tap a token to insert it; the preview uses sample data.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {data.smsTemplates.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No templates yet.</p>
+          ) : (
+            data.smsTemplates.map((t) => (
+              <TemplateEditor key={t.name} name={t.name} body={t.body} />
+            ))
+          )}
+        </CardContent>
+      </Card>
 
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Gateway Configuration</p>
-          <p className="text-sm text-muted-foreground">
-            Set <code className="bg-muted px-1 py-0.5 rounded text-xs">SMS_GATEWAY</code>,{' '}
-            <code className="bg-muted px-1 py-0.5 rounded text-xs">MSG91_AUTH_KEY</code>, and{' '}
-            <code className="bg-muted px-1 py-0.5 rounded text-xs">MSG91_SENDER_ID</code> in your
-            environment variables. Full setup guide in Module 8.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>SMS Log</CardTitle>
+          <CardDescription>The 100 most recent messages.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-1 rounded-md border p-0.5 text-sm">
+            {(['all', 'sent', 'delivered', 'failed'] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setLogFilter(f)}
+                className={cn(
+                  'rounded px-3 py-1 font-medium capitalize transition-colors',
+                  logFilter === f
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          {logs.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">No messages.</p>
+          ) : (
+            <ul className="divide-y">
+              {logs.map((l) => (
+                <li key={l.id} className="flex items-start gap-3 py-2.5">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium">
+                      {l.studentName ?? '—'}
+                      <span className="ml-2 font-mono text-xs text-muted-foreground">
+                        {l.mobile}
+                      </span>
+                      <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal uppercase text-muted-foreground">
+                        {l.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}
+                      </span>
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {l.message}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-0.5 text-xs font-medium capitalize',
+                        LOG_BADGE[l.status] ?? 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {l.status}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                      {l.sentAt.slice(0, 10)}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 

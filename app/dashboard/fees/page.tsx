@@ -71,13 +71,27 @@ export default async function FeesPage({
   const monthDate = firstOfMonth(parseYmd(sp.month ? `${sp.month}-01` : null) ?? today())
   const monthYmd = ymd(monthDate)
 
-  const { data: ledger } = await supabase
-    .from('fee_ledger')
-    .select(
-      'id, student_id, amount_due, amount_paid, balance, status, due_date, students(full_name, student_code)'
-    )
-    .eq('institution_id', session.institutionId)
-    .eq('month_year', monthYmd)
+  const [{ data: ledger }, { data: smsTemplate }, { data: institution }] =
+    await Promise.all([
+      supabase
+        .from('fee_ledger')
+        .select(
+          'id, student_id, month_year, amount_due, amount_paid, balance, status, due_date, students(full_name, student_code, parent_name, parent_mobile, contact_channel)'
+        )
+        .eq('institution_id', session.institutionId)
+        .eq('month_year', monthYmd),
+      supabase
+        .from('sms_templates')
+        .select('body')
+        .eq('institution_id', session.institutionId)
+        .eq('name', 'fee_reminder')
+        .maybeSingle(),
+      supabase
+        .from('institutions')
+        .select('name')
+        .eq('id', session.institutionId)
+        .single(),
+    ])
 
   const ledgerIds = (ledger ?? []).map((l) => l.id)
   const paymentsByLedger = new Map<string, PaymentRow[]>()
@@ -110,6 +124,10 @@ export default async function FeesPage({
       studentId: l.student_id,
       studentName: l.students?.full_name ?? 'Student',
       studentCode: l.students?.student_code ?? null,
+      parentName: l.students?.parent_name ?? null,
+      parentMobile: l.students?.parent_mobile ?? null,
+      contactChannel: l.students?.contact_channel ?? 'sms',
+      month: l.month_year,
       amountDue: l.amount_due,
       amountPaid: l.amount_paid,
       balance: l.balance ?? 0,
@@ -124,6 +142,8 @@ export default async function FeesPage({
       month={monthInputValue(monthDate)}
       monthLabel={monthLabel(monthDate)}
       rows={rows}
+      smsTemplateBody={smsTemplate?.body ?? null}
+      academyName={institution?.name ?? null}
     />
   )
 }

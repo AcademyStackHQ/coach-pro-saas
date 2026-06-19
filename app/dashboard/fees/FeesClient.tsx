@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { ChevronLeft, ChevronRight, Plus, Receipt } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Receipt, MessageSquare } from 'lucide-react'
 import {
   generateMonth,
   recordPayment,
@@ -10,6 +10,11 @@ import {
   waiveLedger,
   type ActionState,
 } from './actions'
+import {
+  sendFeeReminders,
+  type ActionState as SmsActionState,
+} from '../sms/actions'
+import { resolveTemplate } from '@/lib/messaging/tokens'
 import { PAYMENT_MODES, type LedgerStatus } from '@/lib/fees'
 import { ymd, today as todayDate } from '@/lib/calendar'
 import { cn, paiseToRupees } from '@/lib/utils'
@@ -39,6 +44,10 @@ export type LedgerRow = {
   studentId: string
   studentName: string
   studentCode: string | null
+  parentName: string | null
+  parentMobile: string | null
+  contactChannel: string
+  month: string // YYYY-MM-DD (first of month)
   amountDue: number
   amountPaid: number
   balance: number
@@ -51,6 +60,8 @@ export type FeesClientProps = {
   month: string // YYYY-MM
   monthLabel: string
   rows: LedgerRow[]
+  smsTemplateBody: string | null
+  academyName: string | null
 }
 
 const STATUS_BADGE: Record<LedgerStatus, string> = {
@@ -254,19 +265,142 @@ function InvoiceSheet({ row, onClose }: { row: LedgerRow; onClose: () => void })
 }
 
 // ---------------------------------------------------------------------------
+// Send-SMS confirm sheet
+// ---------------------------------------------------------------------------
+function SmsSheet({
+  rows,
+  templateBody,
+  academyName,
+  onClose,
+  onSent,
+}: {
+  rows: LedgerRow[]
+  templateBody: string | null
+  academyName: string | null
+  onClose: () => void
+  onSent: () => void
+}) {
+  const [state, action, pending] = useActionState<SmsActionState, FormData>(
+    sendFeeReminders,
+    {}
+  )
+
+  // Rows with no mobile, or opted out (contact_channel 'none'), are skipped
+  // server-side; mirror that here for an accurate recipient count + preview.
+  const eligible = rows.filter((r) => r.parentMobile && r.contactChannel !== 'none')
+  const skippedCount = rows.length - eligible.length
+
+  useEffect(() => {
+    if (state.success) {
+      const t = setTimeout(() => {
+        onSent()
+        onClose()
+      }, 1400)
+      return () => clearTimeout(t)
+    }
+  }, [state.success, onClose, onSent])
+
+  const preview =
+    templateBody && eligible[0]
+      ? resolveTemplate(templateBody, {
+          parent_name: eligible[0].parentName,
+          student_name: eligible[0].studentName,
+          month: eligible[0].month,
+          amount_due: eligible[0].amountDue,
+          due_date: eligible[0].dueDate,
+          academy_name: academyName,
+        })
+      : null
+
+  return (
+    <Sheet open onOpenChange={(o) => !o && onClose()}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>Send fee reminders</SheetTitle>
+          <SheetDescription>Texts the fee reminder to selected parents.</SheetDescription>
+        </SheetHeader>
+
+        <form action={action} className="flex flex-col gap-4 p-4">
+          <input type="hidden" name="ledger_ids" value={rows.map((r) => r.id).join(',')} />
+          <input type="hidden" name="template_name" value="fee_reminder" />
+
+          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+            <p className="font-medium">
+              {eligible.length} recipient{eligible.length === 1 ? '' : 's'}
+            </p>
+            {skippedCount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {skippedCount} skipped (no mobile or opted out)
+              </p>
+            )}
+          </div>
+
+          {preview ? (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">
+                Preview · {eligible[0].studentName}
+              </p>
+              <p className="rounded-lg border p-3 text-sm leading-relaxed">{preview}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {templateBody
+                ? 'No eligible recipients in this selection.'
+                : 'No fee reminder template configured (Settings → SMS).'}
+            </p>
+          )}
+
+          {state.error && <p className="text-sm text-destructive">{state.error}</p>}
+          {state.success && <p className="text-sm font-medium text-green-600">{state.info}</p>}
+
+          <Button
+            type="submit"
+            disabled={pending || eligible.length === 0 || !templateBody}
+            className="w-full"
+          >
+            {pending ? 'Sending…' : `Send to ${eligible.length}`}
+          </Button>
+        </form>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
-export function FeesClient({ month, monthLabel, rows }: FeesClientProps) {
+export function FeesClient({
+  month,
+  monthLabel,
+  rows,
+  smsTemplateBody,
+  academyName,
+}: FeesClientProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [filter, setFilter] = useState<'all' | LedgerStatus>('all')
   const [selected, setSelected] = useState<LedgerRow | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [smsOpen, setSmsOpen] = useState(false)
   const [genState, genAction, genPending] = useActionState<ActionState, FormData>(
     generateMonth,
     {}
   )
 
-  const goMonth = (m: string) => router.push(`${pathname}?month=${m}`)
+  const toggleId = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const goMonth = (m: string) => {
+    // Selection is keyed to the current month's invoices; drop it on navigate
+    // so the "Send SMS" count never reflects a different month's selection.
+    setSelectedIds(new Set())
+    router.push(`${pathname}?month=${m}`)
+  }
 
   const stats = useMemo(() => {
     const todayYmd = ymd(todayDate())
@@ -291,6 +425,11 @@ export function FeesClient({ month, monthLabel, rows }: FeesClientProps) {
     [rows, filter]
   )
 
+  const selectedRows = rows.filter((r) => selectedIds.has(r.id))
+  const unpaidIds = filtered
+    .filter((r) => r.status === 'pending' || r.status === 'partial')
+    .map((r) => r.id)
+
   // Keep the open sheet in sync after a server action revalidates `rows`.
   const selectedLive = selected ? rows.find((r) => r.id === selected.id) ?? null : null
 
@@ -303,13 +442,23 @@ export function FeesClient({ month, monthLabel, rows }: FeesClientProps) {
             Monthly invoices and payment collection.
           </p>
         </div>
-        <form action={genAction}>
-          <input type="hidden" name="month" value={month} />
-          <Button type="submit" disabled={genPending}>
-            <Plus className="size-4" />
-            {genPending ? 'Generating…' : 'Generate invoices'}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            disabled={selectedIds.size === 0}
+            onClick={() => setSmsOpen(true)}
+          >
+            <MessageSquare className="size-4" />
+            Send SMS{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
           </Button>
-        </form>
+          <form action={genAction}>
+            <input type="hidden" name="month" value={month} />
+            <Button type="submit" disabled={genPending}>
+              <Plus className="size-4" />
+              {genPending ? 'Generating…' : 'Generate invoices'}
+            </Button>
+          </form>
+        </div>
       </div>
 
       {/* Month navigation */}
@@ -388,40 +537,73 @@ export function FeesClient({ month, monthLabel, rows }: FeesClientProps) {
               No {filter} invoices.
             </p>
           ) : (
-            <ul className="divide-y">
-              {filtered.map((r) => (
-                <li key={r.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelected(r)}
-                    className="flex w-full items-center gap-3 py-3 text-left hover:bg-muted/40"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">
-                        {r.studentName}
-                        {r.studentCode && (
-                          <span className="ml-2 font-mono text-xs text-muted-foreground">
-                            {r.studentCode}
-                          </span>
-                        )}
-                      </span>
-                      <span className="block text-xs text-muted-foreground">
-                        Due {rupee(r.amountDue)} · Paid {rupee(r.amountPaid)} · Balance{' '}
-                        {rupee(r.balance)}
-                      </span>
-                    </span>
-                    <span
-                      className={cn(
-                        'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
-                        STATUS_BADGE[r.status]
-                      )}
+            <>
+              <div className="flex items-center gap-3 px-1 py-2 text-xs text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedIds((prev) => new Set([...prev, ...unpaidIds]))
+                  }
+                  disabled={unpaidIds.length === 0}
+                  className="font-medium text-foreground hover:underline disabled:opacity-40"
+                >
+                  Select unpaid
+                </button>
+                {selectedIds.size > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds(new Set())}
+                      className="hover:underline"
                     >
-                      {STATUS_LABEL[r.status]}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+                      Clear
+                    </button>
+                    <span>{selectedIds.size} selected</span>
+                  </>
+                )}
+              </div>
+              <ul className="divide-y">
+                {filtered.map((r) => (
+                  <li key={r.id} className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(r.id)}
+                      onChange={() => toggleId(r.id)}
+                      aria-label={`Select ${r.studentName}`}
+                      className="size-4 shrink-0 rounded border-input accent-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSelected(r)}
+                      className="flex flex-1 items-center gap-3 py-3 text-left hover:bg-muted/40"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">
+                          {r.studentName}
+                          {r.studentCode && (
+                            <span className="ml-2 font-mono text-xs text-muted-foreground">
+                              {r.studentCode}
+                            </span>
+                          )}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          Due {rupee(r.amountDue)} · Paid {rupee(r.amountPaid)} · Balance{' '}
+                          {rupee(r.balance)}
+                        </span>
+                      </span>
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
+                          STATUS_BADGE[r.status]
+                        )}
+                      >
+                        {STATUS_LABEL[r.status]}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </CardContent>
       </Card>
@@ -431,6 +613,16 @@ export function FeesClient({ month, monthLabel, rows }: FeesClientProps) {
           key={selectedLive.id}
           row={selectedLive}
           onClose={() => setSelected(null)}
+        />
+      )}
+
+      {smsOpen && (
+        <SmsSheet
+          rows={selectedRows}
+          templateBody={smsTemplateBody}
+          academyName={academyName}
+          onClose={() => setSmsOpen(false)}
+          onSent={() => setSelectedIds(new Set())}
         />
       )}
     </div>

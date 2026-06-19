@@ -15,7 +15,7 @@ import {
 import { ProgramsField } from '@/components/dashboard/ProgramsField'
 import { EventAgenda } from '@/components/dashboard/EventAgenda'
 import type { CalendarEvent } from '@/lib/calendar'
-import { GENDERS, UNIFORM_SIZES } from '@/lib/constants'
+import { GENDERS, UNIFORM_SIZES, CONTACT_CHANNELS } from '@/lib/constants'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,7 +36,7 @@ export type StudentDetailData = {
   parent_name: string
   parent_mobile: string
   parent_email: string | null
-  sms_opt_in: boolean
+  contact_channel: string
   uniform_size: string | null
   uniform_number: number | null
   uniform_name: string | null
@@ -229,15 +229,24 @@ function ParentTab({ data }: { data: StudentDetailData }) {
             </p>
           </div>
 
-          <label className="flex items-center gap-2.5">
-            <input
-              type="checkbox"
-              name="sms_opt_in"
-              defaultChecked={data.sms_opt_in}
-              className="size-4 rounded border-input accent-primary"
-            />
-            <span className="text-sm">Parent consents to SMS notifications</span>
-          </label>
+          <div className="space-y-1.5">
+            <Label htmlFor="contact_channel">Message channel</Label>
+            <select
+              id="contact_channel"
+              name="contact_channel"
+              defaultValue={data.contact_channel}
+              className={nativeSelectClass()}
+            >
+              {CONTACT_CHANNELS.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              How fee reminders and announcements reach this parent.
+            </p>
+          </div>
 
           <SaveRow state={state} pending={pending} />
         </form>

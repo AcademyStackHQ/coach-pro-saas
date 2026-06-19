@@ -7,7 +7,6 @@ import { rupeesToPaise } from '@/lib/utils'
 import { today, parseYmd } from '@/lib/calendar'
 import {
   generateLedger,
-  ledgerStatus,
   parseMonth,
   firstOfMonth,
   PAYMENT_MODES,
@@ -78,7 +77,8 @@ export async function recordPayment(
 
   const supabase = await createClient()
 
-  // Load + authorise the invoice (must be in the active institution, open).
+  // Load the invoice for friendly validation only — the authoritative checks
+  // and the write happen atomically inside record_fee_payment below.
   const { data: ledger } = await supabase
     .from('fee_ledger')
     .select('id, institution_id, student_id, amount_due, amount_paid, status')
@@ -88,36 +88,23 @@ export async function recordPayment(
     return { error: 'Invoice not found.' }
   if (ledger.status === 'paid' || ledger.status === 'waived')
     return { error: `This invoice is already ${ledger.status}.` }
+  if (amount > ledger.amount_due - ledger.amount_paid)
+    return { error: 'Amount exceeds the outstanding balance.' }
 
-  // Sequential receipt number (atomic, admin-guarded RPC).
-  const { data: receiptNumber, error: rcptErr } = await supabase.rpc(
-    'next_receipt_number',
-    { p_institution_id: session.institutionId }
-  )
-  if (rcptErr) return { error: 'Could not generate a receipt number.' }
-
-  const { error: payErr } = await supabase.from('fee_payments').insert({
-    institution_id: session.institutionId,
-    ledger_id: ledger.id,
-    student_id: ledger.student_id,
-    amount,
-    payment_mode: mode,
-    receipt_number: receiptNumber,
-    recorded_by: session.userId,
-    notes,
-    ...(paidAt ? { paid_at: paidAt } : {}),
+  // Atomic, admin-guarded RPC: locks the invoice row, assigns the sequential
+  // receipt number, inserts the payment and advances amount_paid + status in
+  // one transaction. Eliminates the lost-update race between concurrent
+  // payments and never leaves a receipt-number gap (a failed insert rolls the
+  // sequence back).
+  const { error: rpcErr } = await supabase.rpc('record_fee_payment', {
+    p_ledger_id: ledger.id,
+    p_amount: amount,
+    p_mode: mode,
+    p_paid_at: paidAt,
+    p_notes: notes,
+    p_recorded_by: session.userId,
   })
-  if (payErr) return { error: 'Failed to record the payment.' }
-
-  const newPaid = ledger.amount_paid + amount
-  const { error: updErr } = await supabase
-    .from('fee_ledger')
-    .update({
-      amount_paid: newPaid,
-      status: ledgerStatus(ledger.amount_due, newPaid),
-    })
-    .eq('id', ledger.id)
-  if (updErr) return { error: 'Payment saved but the invoice did not update.' }
+  if (rpcErr) return { error: 'Failed to record the payment.' }
 
   revalidateFees(ledger.student_id)
   return { success: true }
@@ -135,34 +122,15 @@ export async function voidPayment(formData: FormData): Promise<void> {
   if (!paymentId) return
 
   const supabase = await createClient()
-  const { data: payment } = await supabase
-    .from('fee_payments')
-    .select('id, institution_id, ledger_id, student_id, amount, voided_at')
-    .eq('id', paymentId)
-    .maybeSingle()
-  if (!payment || payment.institution_id !== session.institutionId) return
-  if (payment.voided_at) return // already voided
 
-  const { error: voidErr } = await supabase
-    .from('fee_payments')
-    .update({ voided_at: new Date().toISOString() })
-    .eq('id', payment.id)
-  if (voidErr) return
+  // Atomic, admin-guarded RPC: marks the payment voided and reverses its
+  // amount off the invoice (status recomputed) in one locked transaction.
+  // A no-op for an already-voided payment. Returns the student id.
+  const { data: studentId } = await supabase.rpc('void_fee_payment', {
+    p_payment_id: paymentId,
+  })
 
-  const { data: ledger } = await supabase
-    .from('fee_ledger')
-    .select('id, amount_due, amount_paid, status')
-    .eq('id', payment.ledger_id)
-    .maybeSingle()
-  if (ledger && ledger.status !== 'waived') {
-    const newPaid = Math.max(0, ledger.amount_paid - payment.amount)
-    await supabase
-      .from('fee_ledger')
-      .update({ amount_paid: newPaid, status: ledgerStatus(ledger.amount_due, newPaid) })
-      .eq('id', ledger.id)
-  }
-
-  revalidateFees(payment.student_id)
+  revalidateFees((studentId as string | null) ?? undefined)
 }
 
 // ---------------------------------------------------------------------------

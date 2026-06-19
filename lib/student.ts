@@ -30,6 +30,7 @@ export type MyStudentRecord = {
   uniform_name: string | null
   monthly_fee: number | null
   deposit_amount: number | null
+  contact_channel: string
 }
 
 export type MyInstitution = {
@@ -63,7 +64,7 @@ export async function getMyStudentContext(): Promise<MyStudentContext> {
     supabase
       .from('students')
       .select(
-        'id, full_name, calling_name, dob, gender, student_code, status, enrolment_date, programs, photo_url, parent_name, parent_mobile, parent_email, uniform_size, uniform_number, uniform_name, monthly_fee, deposit_amount'
+        'id, full_name, calling_name, dob, gender, student_code, status, enrolment_date, programs, photo_url, parent_name, parent_mobile, parent_email, uniform_size, uniform_number, uniform_name, monthly_fee, deposit_amount, contact_channel'
       )
       .eq('user_id', session.userId)
       .eq('institution_id', session.institutionId)

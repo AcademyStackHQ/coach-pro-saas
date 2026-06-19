@@ -108,6 +108,16 @@ export const GENDERS = [
 
 export const UNIFORM_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 
+// Per-student messaging preference. Routes every outbound message (fee
+// reminders, announcements). 'both' fans out to SMS + WhatsApp; 'none' opts
+// the parent out of all messaging.
+export const CONTACT_CHANNELS = [
+  { value: 'sms', label: 'SMS' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'both', label: 'SMS + WhatsApp' },
+  { value: 'none', label: 'Do not message' },
+] as const
+
 // Age threshold above which a student may have their own login (14+ invite
 // path — deferred). A product policy enforced in the UI/server action, never
 // as a DB constraint, since the threshold may change.

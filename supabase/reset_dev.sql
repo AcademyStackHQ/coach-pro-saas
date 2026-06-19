@@ -12,7 +12,8 @@
 --                          + seeds automatically); use this file only if
 --                          you need to reset a remote/linked DB by hand.
 --
--- After running, re-apply migrations in order: 001 → 002 → … → 007.
+-- After running, re-apply migrations in order: 001 → 002 → … → 007
+-- (or just run supabase/rebuild_all.sql, which is all of them concatenated).
 -- ============================================================
 
 -- 1. Drop everything in `public` (tables, functions, policies, indexes,

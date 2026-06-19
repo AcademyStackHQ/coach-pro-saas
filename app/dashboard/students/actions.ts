@@ -47,6 +47,13 @@ function strOrNull(formData: FormData, key: string): string | null {
   return v === '' ? null : v
 }
 
+// Per-student messaging channel; defaults to 'sms' and is validated against the
+// allowed set (the DB CHECK is the backstop).
+function contactChannel(formData: FormData): 'sms' | 'whatsapp' | 'both' | 'none' {
+  const v = str(formData, 'contact_channel')
+  return v === 'whatsapp' || v === 'both' || v === 'none' ? v : 'sms'
+}
+
 // ---------------------------------------------------------------------------
 // Create a student — a direct `students` insert (records, not logins). Never
 // touches the allowlist/signup flow, so a shared parent_email can't collide.
@@ -138,6 +145,7 @@ export async function createStudent(
       parent_name: parentName,
       parent_mobile: parentMobile,
       parent_email: parentEmail,
+      contact_channel: contactChannel(formData),
       student_code: studentCode as string,
       enrolment_date: strOrNull(formData, 'enrolment_date') ?? undefined,
       programs,
@@ -207,7 +215,7 @@ export async function updateStudent(
     patch.parent_name = parentName
     patch.parent_mobile = parentMobile
     patch.parent_email = parentEmail
-    patch.sms_opt_in = str(formData, 'sms_opt_in') === 'on'
+    patch.contact_channel = contactChannel(formData)
   } else if (section === 'uniform') {
     patch.uniform_size = strOrNull(formData, 'uniform_size')
     const num = str(formData, 'uniform_number')

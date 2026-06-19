@@ -161,7 +161,7 @@ export default async function StudentPage({
     parent_name: student.parent_name,
     parent_mobile: student.parent_mobile,
     parent_email: student.parent_email,
-    sms_opt_in: student.sms_opt_in ?? true,
+    contact_channel: student.contact_channel ?? 'sms',
     uniform_size: student.uniform_size,
     uniform_number: student.uniform_number,
     uniform_name: student.uniform_name,

@@ -7,7 +7,7 @@
 -- a coach can create/edit/manage enrolment for batches where they are
 -- the assigned coach; admins manage every batch in the institution.
 --
--- Occurrences are NOT stored — the schedule (days_of_week + start/end
+-- Occurrences are NOT stored — the schedule (a per-day JSONB slot array
 -- + effective_from) is the source of truth; the calendar computes
 -- occurrences on the fly (Module 6).
 -- ============================================================
@@ -21,22 +21,22 @@ CREATE TABLE public.batches (
   id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   institution_id UUID        NOT NULL REFERENCES public.institutions(id) ON DELETE CASCADE,
   name           TEXT        NOT NULL,
-  sport          TEXT        NOT NULL,
+  program        TEXT        NOT NULL,
   -- nullable: a batch may be created before a coach is assigned. ON DELETE
   -- SET NULL so removing a coach profile never deletes their batches.
   coach_id       UUID        REFERENCES public.coaches(id) ON DELETE SET NULL,
-  -- 0 = Sun … 6 = Sat (matches JS Date.getDay() for occurrence math).
-  days_of_week   INT[]       NOT NULL DEFAULT '{}',
-  start_time     TIME        NOT NULL,
-  end_time       TIME        NOT NULL,
+  -- Per-day timetable, one slot per day:
+  --   [{ "day": 5, "start": "17:00", "end": "18:30" }, … ]
+  -- where `day` is a JS Date.getDay() index (0 = Sun … 6 = Sat) so the
+  -- occurrence/calendar math (Module 6) computes directly. `end > start` is
+  -- validated in the server action (parseForm), not as a DB constraint.
+  schedule       JSONB       NOT NULL DEFAULT '[]'::jsonb,
   venue          TEXT,
   capacity       INT         NOT NULL CHECK (capacity > 0),  -- max ACTIVE enrolments
   monthly_fee    INT         NOT NULL DEFAULT 0,             -- in paise
   status         TEXT        NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
   effective_from DATE        NOT NULL DEFAULT now(),         -- first occurrence date
-  created_at     TIMESTAMPTZ DEFAULT now(),
-
-  CONSTRAINT batches_time_order CHECK (end_time > start_time)
+  created_at     TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE INDEX idx_batches_institution_coach_status

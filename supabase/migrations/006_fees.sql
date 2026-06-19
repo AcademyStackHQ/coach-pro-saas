@@ -1,5 +1,5 @@
 -- ============================================================
--- 008 — Fee Management (Module 7)
+-- 006 — Fee Management (Module 7)
 --
 -- Turns the per-student `monthly_fee` (003_students) into a billing
 -- loop: a monthly `fee_ledger` invoice per student, and `fee_payments`
@@ -118,6 +118,111 @@ BEGIN
   INTO   v_seq, v_prefix;
 
   RETURN v_prefix || '-' || to_char(now(), 'YYYY') || '-' || lpad(v_seq::TEXT, 4, '0');
+END;
+$$;
+
+
+-- ============================================================
+-- 4b. PAYMENT RPCs — atomic record / void
+--
+-- The whole record-payment and void-payment operations run inside one locked
+-- transaction so concurrent writes can't lose an update on amount_paid, and a
+-- failed payment insert can't leave a receipt-number gap. Admin-guarded,
+-- mirroring next_receipt_number.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.record_fee_payment(
+  p_ledger_id   UUID,
+  p_amount      INT,
+  p_mode        TEXT,
+  p_paid_at     TIMESTAMPTZ,
+  p_notes       TEXT,
+  p_recorded_by UUID
+)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_ledger   public.fee_ledger;
+  v_receipt  TEXT;
+  v_new_paid INT;
+BEGIN
+  -- Lock the invoice row so concurrent payments serialise here.
+  SELECT * INTO v_ledger FROM public.fee_ledger WHERE id = p_ledger_id FOR UPDATE;
+  IF v_ledger.id IS NULL OR NOT public.is_admin_of(v_ledger.institution_id) THEN
+    RAISE EXCEPTION 'Not authorised';
+  END IF;
+  IF v_ledger.status IN ('paid', 'waived') THEN
+    RAISE EXCEPTION 'Invoice already %', v_ledger.status;
+  END IF;
+  IF p_amount <= 0 THEN
+    RAISE EXCEPTION 'Invalid amount';
+  END IF;
+  IF p_amount > v_ledger.amount_due - v_ledger.amount_paid THEN
+    RAISE EXCEPTION 'Amount exceeds the outstanding balance';
+  END IF;
+
+  v_receipt  := public.next_receipt_number(v_ledger.institution_id);
+  v_new_paid := v_ledger.amount_paid + p_amount;
+
+  INSERT INTO public.fee_payments (
+    institution_id, ledger_id, student_id, amount, payment_mode,
+    receipt_number, recorded_by, notes, paid_at
+  ) VALUES (
+    v_ledger.institution_id, v_ledger.id, v_ledger.student_id, p_amount, p_mode,
+    v_receipt, p_recorded_by, p_notes, COALESCE(p_paid_at, now())
+  );
+
+  UPDATE public.fee_ledger
+  SET amount_paid = v_new_paid,
+      status      = CASE
+                      WHEN v_new_paid >= amount_due THEN 'paid'
+                      WHEN v_new_paid > 0           THEN 'partial'
+                      ELSE 'pending'
+                    END
+  WHERE id = v_ledger.id;
+
+  RETURN v_receipt;
+END;
+$$;
+
+
+CREATE OR REPLACE FUNCTION public.void_fee_payment(p_payment_id UUID)
+RETURNS UUID                                   -- student_id, for revalidation
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_pay    public.fee_payments;
+  v_ledger public.fee_ledger;
+BEGIN
+  SELECT * INTO v_pay FROM public.fee_payments WHERE id = p_payment_id FOR UPDATE;
+  IF v_pay.id IS NULL OR NOT public.is_admin_of(v_pay.institution_id) THEN
+    RAISE EXCEPTION 'Not authorised';
+  END IF;
+  IF v_pay.voided_at IS NOT NULL THEN
+    RETURN v_pay.student_id;                    -- already voided: no-op
+  END IF;
+
+  UPDATE public.fee_payments SET voided_at = now() WHERE id = v_pay.id;
+
+  -- Reverse the amount off the invoice, unless it has been waived.
+  SELECT * INTO v_ledger FROM public.fee_ledger WHERE id = v_pay.ledger_id FOR UPDATE;
+  IF v_ledger.id IS NOT NULL AND v_ledger.status <> 'waived' THEN
+    UPDATE public.fee_ledger
+    SET amount_paid = GREATEST(0, amount_paid - v_pay.amount),
+        status      = CASE
+                        WHEN GREATEST(0, amount_paid - v_pay.amount) >= amount_due THEN 'paid'
+                        WHEN GREATEST(0, amount_paid - v_pay.amount) > 0           THEN 'partial'
+                        ELSE 'pending'
+                      END
+    WHERE id = v_ledger.id;
+  END IF;
+
+  RETURN v_pay.student_id;
 END;
 $$;
 
