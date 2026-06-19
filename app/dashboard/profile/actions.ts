@@ -53,6 +53,12 @@ export async function updateMyProfile(
     uniformNumber = n
   }
 
+  const channelRaw = ((formData.get('contact_channel') as string) ?? '').trim()
+  const contactChannel =
+    channelRaw === 'whatsapp' || channelRaw === 'both' || channelRaw === 'none'
+      ? channelRaw
+      : 'sms'
+
   const admin = createAdminClient()
   const { error } = await admin
     .from('students')
@@ -60,6 +66,7 @@ export async function updateMyProfile(
       calling_name: strOrNull(formData, 'calling_name'),
       uniform_name: strOrNull(formData, 'uniform_name'),
       uniform_number: uniformNumber,
+      contact_channel: contactChannel,
     })
     .eq('id', student.id)
     .eq('user_id', session.userId) // ownership double-guard

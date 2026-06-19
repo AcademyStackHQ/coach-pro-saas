@@ -1,5 +1,5 @@
 -- ============================================================
--- 007 — 1-to-1 Sessions (Module 6: Calendar & Scheduling)
+-- 005 — 1-to-1 Sessions (Module 6: Calendar & Scheduling)
 --
 -- A `session` is a single dated coach↔student appointment (private
 -- coaching), distinct from a batch occurrence. Batch occurrences are

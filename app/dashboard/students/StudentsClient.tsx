@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { GraduationCap, Plus, UserPlus } from 'lucide-react'
 import { createStudent, type ActionState } from './actions'
 import { ProgramsField } from '@/components/dashboard/ProgramsField'
-import { GENDERS } from '@/lib/constants'
+import { GENDERS, CONTACT_CHANNELS } from '@/lib/constants'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -151,6 +151,25 @@ function AddStudentSheet({
             <p className="text-xs text-muted-foreground">
               A contact field only — siblings can share the same email. A unique
               student code is assigned automatically.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="s_contact_channel">Message channel</Label>
+            <select
+              id="s_contact_channel"
+              name="contact_channel"
+              defaultValue="sms"
+              className={nativeSelectClass()}
+            >
+              {CONTACT_CHANNELS.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              How fee reminders and announcements reach this parent.
             </p>
           </div>
 

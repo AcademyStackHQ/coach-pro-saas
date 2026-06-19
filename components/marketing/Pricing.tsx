@@ -49,7 +49,7 @@ const plans = [
     features: [
       "Unlimited batches & coaches",
       "WhatsApp & SMS reminders",
-      "PDF receipts & fee collection",
+      "Fee collection & payment tracking",
       "Advanced scheduling",
       "Attendance & performance tracking",
       "Priority support",

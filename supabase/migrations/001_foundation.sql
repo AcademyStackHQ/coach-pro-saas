@@ -30,7 +30,7 @@ CREATE TABLE public.institutions (
   address             TEXT,
   contact_email       TEXT,
   contact_mobile      TEXT,
-  sports              TEXT[]      DEFAULT '{}',
+  programs            TEXT[]      DEFAULT '{}',
   timezone            TEXT        DEFAULT 'Asia/Kolkata',
   plan                TEXT        DEFAULT 'free'
                                   CHECK (plan IN ('free', 'pro', 'enterprise')),

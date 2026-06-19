@@ -12,7 +12,7 @@ const useCases = [
     discipline: "Football",
     title: "Multi-venue academies",
     description:
-      "Coordinate coaches and age groups across venues, and keep parents updated with WhatsApp reminders and instant receipts.",
+      "Coordinate coaches and age groups across venues, and keep parents updated with WhatsApp reminders and instant payment confirmations.",
   },
   {
     discipline: "Music & dance",

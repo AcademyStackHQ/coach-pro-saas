@@ -23,7 +23,7 @@ const features = [
     icon: "💳",
     title: "Fee Collection",
     description:
-      "Auto-generate monthly invoices, record payments, and send PDF receipts instantly.",
+      "Auto-generate monthly invoices, record payments, and track balances in real time.",
   },
   {
     icon: "📱",

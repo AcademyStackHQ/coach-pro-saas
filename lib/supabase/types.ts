@@ -177,6 +177,147 @@ export type Database = {
           },
         ]
       }
+      fee_ledger: {
+        Row: {
+          amount_due: number
+          amount_paid: number
+          balance: number | null
+          batch_id: string | null
+          created_at: string | null
+          due_date: string | null
+          id: string
+          institution_id: string
+          month_year: string
+          notes: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          amount_due: number
+          amount_paid?: number
+          balance?: number | null
+          batch_id?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          institution_id: string
+          month_year: string
+          notes?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          amount_due?: number
+          amount_paid?: number
+          balance?: number | null
+          batch_id?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          institution_id?: string
+          month_year?: string
+          notes?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_ledger_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_ledger_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_ledger_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fee_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          institution_id: string
+          ledger_id: string
+          notes: string | null
+          paid_at: string
+          payment_mode: string
+          receipt_number: string | null
+          recorded_by: string | null
+          student_id: string
+          voided_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          institution_id: string
+          ledger_id: string
+          notes?: string | null
+          paid_at?: string
+          payment_mode: string
+          receipt_number?: string | null
+          recorded_by?: string | null
+          student_id: string
+          voided_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          institution_id?: string
+          ledger_id?: string
+          notes?: string | null
+          paid_at?: string
+          payment_mode?: string
+          receipt_number?: string | null
+          recorded_by?: string | null
+          student_id?: string
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_payments_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "fee_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institution_allowed_emails: {
         Row: {
           added_by: string | null
@@ -279,6 +420,7 @@ export type Database = {
           onboarding_complete: boolean | null
           plan: string | null
           programs: string[] | null
+          receipt_seq: number
           slug: string
           sms_credits: number | null
           student_seq: number
@@ -299,6 +441,7 @@ export type Database = {
           onboarding_complete?: boolean | null
           plan?: string | null
           programs?: string[] | null
+          receipt_seq?: number
           slug: string
           sms_credits?: number | null
           student_seq?: number
@@ -319,6 +462,7 @@ export type Database = {
           onboarding_complete?: boolean | null
           plan?: string | null
           programs?: string[] | null
+          receipt_seq?: number
           slug?: string
           sms_credits?: number | null
           student_seq?: number
@@ -421,9 +565,109 @@ export type Database = {
           },
         ]
       }
+      sms_logs: {
+        Row: {
+          channel: string
+          delivered_at: string | null
+          gateway_ref: string | null
+          id: string
+          institution_id: string
+          ledger_id: string | null
+          message: string
+          mobile: string
+          sent_at: string
+          status: string
+          student_id: string | null
+          template_name: string | null
+        }
+        Insert: {
+          channel?: string
+          delivered_at?: string | null
+          gateway_ref?: string | null
+          id?: string
+          institution_id: string
+          ledger_id?: string | null
+          message: string
+          mobile: string
+          sent_at?: string
+          status?: string
+          student_id?: string | null
+          template_name?: string | null
+        }
+        Update: {
+          channel?: string
+          delivered_at?: string | null
+          gateway_ref?: string | null
+          id?: string
+          institution_id?: string
+          ledger_id?: string | null
+          message?: string
+          mobile?: string
+          sent_at?: string
+          status?: string
+          student_id?: string | null
+          template_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_logs_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_logs_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "fee_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_logs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_templates: {
+        Row: {
+          body: string
+          id: string
+          institution_id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          body: string
+          id?: string
+          institution_id: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          body?: string
+          id?: string
+          institution_id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_templates_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           calling_name: string | null
+          contact_channel: string
           created_at: string | null
           deposit_amount: number | null
           dob: string
@@ -449,6 +693,7 @@ export type Database = {
         }
         Insert: {
           calling_name?: string | null
+          contact_channel?: string
           created_at?: string | null
           deposit_amount?: number | null
           dob: string
@@ -474,6 +719,7 @@ export type Database = {
         }
         Update: {
           calling_name?: string | null
+          contact_channel?: string
           created_at?: string | null
           deposit_amount?: number | null
           dob?: string
@@ -526,6 +772,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_sms_credits: {
+        Args: { p_count: number; p_institution_id: string }
+        Returns: number
+      }
       generate_institution_code: { Args: { p_name: string }; Returns: string }
       get_my_institution_ids: { Args: never; Returns: string[] }
       is_admin_of: { Args: { p_institution_id: string }; Returns: boolean }
@@ -544,8 +794,24 @@ export type Database = {
         }
         Returns: Json
       }
+      next_receipt_number: {
+        Args: { p_institution_id: string }
+        Returns: string
+      }
       next_student_code: { Args: { p_institution_id: string }; Returns: string }
       owns_batch_coach: { Args: { p_coach_id: string }; Returns: boolean }
+      record_fee_payment: {
+        Args: {
+          p_amount: number
+          p_ledger_id: string
+          p_mode: string
+          p_notes: string | null
+          p_paid_at: string | null
+          p_recorded_by: string
+        }
+        Returns: string
+      }
+      void_fee_payment: { Args: { p_payment_id: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

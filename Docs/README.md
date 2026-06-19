@@ -27,8 +27,8 @@ Navigate to any module below for implementation details, API contracts, and stat
 | 4 | Student Management | `✅ Done` | [→ details](./guides/04-student-management.md) |
 | 5 | Batch Management | `✅ Done` | [→ details](./guides/05-batch-management.md) |
 | 6 | Calendar & Scheduling | `✅ Done` | [→ details](./guides/06-calendar-scheduling.md) |
-| 7 | Fee Management | `🔲 Pending` | [→ details](./guides/07-fee-management.md) |
-| 8 | SMS Notifications | `🔲 Pending` | [→ details](./guides/08-sms-notifications.md) |
+| 7 | Fee Management | `✅ Done` | [→ details](./guides/07-fee-management.md) |
+| 8 | SMS Notifications | `✅ Done` | [→ details](./guides/08-sms-notifications.md) |
 
 > Module 0 (Marketing Site) is independent and can be built in parallel with Module 1.
 > Modules 1–8 must be completed in sequence — each depends on the one before it.
@@ -44,7 +44,7 @@ Navigate to any module below for implementation details, API contracts, and stat
 | Auth → Role | Role lives in `institution_members.role` (not `profiles`); the active role is held in the httpOnly `active_role` cookie. One `/dashboard` route group — the sidebar branches on role |
 | Student login | Opt-in per student: a globally-unique **student code** (`MVA0007`) maps to a synthetic Supabase Auth email — login with code + password, no custom auth. Created via the service-role client (`lib/admin.ts`). See Module 4 |
 | Batch occurrences | Computed on-the-fly from schedule, not stored as rows (Phase 2) |
-| SMS gateway | Pluggable via env var — default MSG91 |
+| Messaging | Channel-aware (SMS + WhatsApp) via `lib/messaging`; provider chosen by `SMS_PROVIDER` / `WHATSAPP_PROVIDER` — **default is a `mock` no-op** (logs only) until a real vendor is wired |
 | Plan limits | Enforced server-side by `planGuard()` — Free: 15 students, 2 batches, 1 coach |
 
 ---
@@ -55,9 +55,9 @@ Navigate to any module below for implementation details, API contracts, and stat
 - **Backend:** Next.js Server Actions · Supabase RPCs (route handlers added per-need)
 - **Database:** Supabase PostgreSQL · Row Level Security
 - **Auth:** Supabase Auth (email/password) — admins/coaches via an email allowlist + signup trigger; **students via an opt-in student code** mapped to a synthetic email (no custom auth)
-- **Storage:** Supabase Storage (logos · photos · PDF receipts)
+- **Storage:** Supabase Storage (logos · photos)
 - **Deploy:** Vercel (CI/CD · preview deploys · cron jobs)
-- **SMS:** MSG91 (swappable via `SMS_GATEWAY` env var)
+- **Messaging:** SMS + WhatsApp via `lib/messaging` — provider selected by `SMS_PROVIDER` / `WHATSAPP_PROVIDER`, defaulting to a `mock` no-op (real MSG91 / Meta / Twilio is a one-line registry entry)
 
 ---
 
@@ -77,9 +77,13 @@ components/
   marketing/  ui/
 lib/
   server.ts  client.ts  admin.ts  types.ts (supabase/)
-  requireRole.ts  planGuard.ts  constants.ts  utils.ts
+  requireRole.ts  planGuard.ts  constants.ts  utils.ts  activeSession.ts
+  calendar.ts (Module 6)  fees.ts (Module 7)  messaging/ (Module 8)
+  email.ts  notify.ts  student.ts
 proxy.ts                 auth guard + routing (replaces middleware.ts)
-supabase/migrations/     001 … 007 (apply in order); reset_dev.sql / clear_dev.sql dev helpers
+scripts/db.mjs           dev DB runner — npm run db:bundle|rebuild|reset|clear|fresh
+supabase/migrations/     consolidated baseline 001 … 007 (apply in filename order)
+supabase/                rebuild_all.sql (generated) · reset_dev.sql / clear_dev.sql helpers
 docs/
   README.md              ← you are here
   guides/                ← numbered module dev guides

@@ -95,7 +95,7 @@ The `(marketing)` group uses a different layout from the app — no sidebar, no 
 |---|---|---|
 | 👥 | Student Management | Pre-approve student emails, let them self-sign-up, and manage profiles, uniform details, and guardian contacts in one place. |
 | 📅 | Smart Scheduling | Batch calendars and 1-to-1 sessions with automatic conflict detection for coaches and venues. |
-| 💳 | Fee Collection | Auto-generate monthly invoices, record payments, and send PDF receipts instantly. |
+| 💳 | Fee Collection | Auto-generate monthly invoices, record payments, and track balances in real time. |
 | 📱 | SMS & WhatsApp | Automated fee reminders and payment confirmations sent directly to parents. |
 | 📊 | Academy Dashboard | Live stats on active students, fee collection rate, and today's sessions at a glance. |
 | 🔒 | Secure & Multi-tenant | Every academy's data is fully isolated — GDPR-ready with role-based access control. |
@@ -113,7 +113,7 @@ The `(marketing)` group uses a different layout from the app — no sidebar, no 
 1. **Create your academy** — Sign up free, add your academy name and first program. No credit card needed.
 2. **Add coaches and batches** — Invite coaches by email, set your batch schedules and monthly fees.
 3. **Pre-approve your students** — Add student emails from your dashboard. Students self-sign-up and are instantly linked to your academy — no manual linking needed.
-4. **Collect fees automatically** — Auto-generate monthly invoices, record payments, and send PDF receipts.
+4. **Collect fees automatically** — Auto-generate monthly invoices, record payments, and track balances.
 
 **Component:** `components/marketing/HowItWorks.tsx`
 

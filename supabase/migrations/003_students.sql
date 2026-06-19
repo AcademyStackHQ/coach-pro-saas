@@ -30,13 +30,13 @@ CREATE TABLE public.students (
   parent_name      TEXT        NOT NULL,
   parent_mobile    TEXT        NOT NULL,                   -- E.164, e.g. +919876543210
   parent_email     TEXT,                                   -- plain contact — NO unique constraint
-  sports           TEXT[]      DEFAULT '{}',
+  programs         TEXT[]      DEFAULT '{}',
   enrolment_date   DATE        DEFAULT now(),
   status           TEXT        DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
   photo_url        TEXT,                                   -- column ships; upload wired later
-  jersey_size      TEXT,
-  jersey_number    INT,
-  jersey_name      TEXT,
+  uniform_size     TEXT,
+  uniform_number   INT,
+  uniform_name     TEXT,
   monthly_fee      INT,                                    -- recurring monthly fee, in paise
   deposit_amount   INT,                                    -- one-time advance / deposit, in paise
   sms_opt_in       BOOLEAN     DEFAULT true,

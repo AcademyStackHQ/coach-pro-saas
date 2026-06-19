@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import { Building2, Mail, MapPin, Phone } from 'lucide-react'
 import { updateMyProfile, type ProfileActionState } from './actions'
+import { CONTACT_CHANNELS } from '@/lib/constants'
 import { StudentIdCard } from '@/components/dashboard/StudentIdCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -104,6 +105,25 @@ export function ProfileClient({
                   defaultValue={student.uniform_number ?? ''}
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="contact_channel">How we message you</Label>
+              <select
+                id="contact_channel"
+                name="contact_channel"
+                defaultValue={student.contact_channel}
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                {CONTACT_CHANNELS.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Fee reminders and academy announcements come through this channel.
+              </p>
             </div>
 
             <div className="flex items-center justify-between pt-1">

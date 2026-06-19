@@ -15,7 +15,7 @@ import {
 import { ProgramsField } from '@/components/dashboard/ProgramsField'
 import { EventAgenda } from '@/components/dashboard/EventAgenda'
 import type { CalendarEvent } from '@/lib/calendar'
-import { GENDERS, UNIFORM_SIZES } from '@/lib/constants'
+import { GENDERS, UNIFORM_SIZES, CONTACT_CHANNELS } from '@/lib/constants'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,12 +36,20 @@ export type StudentDetailData = {
   parent_name: string
   parent_mobile: string
   parent_email: string | null
-  sms_opt_in: boolean
+  contact_channel: string
   uniform_size: string | null
   uniform_number: number | null
   uniform_name: string | null
   monthly_fee: number | null
   deposit_amount: number | null
+  feeInvoices: {
+    id: string
+    monthLabel: string
+    amountDue: number
+    amountPaid: number
+    balance: number
+    status: 'pending' | 'partial' | 'paid' | 'waived'
+  }[]
   institutionPrograms: string[]
   batches: {
     id: string
@@ -221,15 +229,24 @@ function ParentTab({ data }: { data: StudentDetailData }) {
             </p>
           </div>
 
-          <label className="flex items-center gap-2.5">
-            <input
-              type="checkbox"
-              name="sms_opt_in"
-              defaultChecked={data.sms_opt_in}
-              className="size-4 rounded border-input accent-primary"
-            />
-            <span className="text-sm">Parent consents to SMS notifications</span>
-          </label>
+          <div className="space-y-1.5">
+            <Label htmlFor="contact_channel">Message channel</Label>
+            <select
+              id="contact_channel"
+              name="contact_channel"
+              defaultValue={data.contact_channel}
+              className={nativeSelectClass()}
+            >
+              {CONTACT_CHANNELS.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              How fee reminders and announcements reach this parent.
+            </p>
+          </div>
 
           <SaveRow state={state} pending={pending} />
         </form>
@@ -338,12 +355,50 @@ function FeesTab({ data }: { data: StudentDetailData }) {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            These are the student&apos;s default fee amounts. The full payment ledger
-            (invoices, receipts, history) arrives in Module 7.
+            These are the student&apos;s default fee amounts, used when generating monthly
+            invoices. Manage payments from the{' '}
+            <Link href="/dashboard/fees" className="underline">
+              Fees
+            </Link>{' '}
+            dashboard.
           </p>
 
           <SaveRow state={state} pending={pending} />
         </form>
+
+        <div className="mt-6 border-t pt-4">
+          <p className="mb-2 text-sm font-medium">Invoice history</p>
+          {data.feeInvoices.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No invoices yet.</p>
+          ) : (
+            <ul className="divide-y rounded-lg border text-sm">
+              {data.feeInvoices.map((inv) => (
+                <li key={inv.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <span className="font-medium">{inv.monthLabel}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Due ₹{paiseToRupees(inv.amountDue) || '0'} · Paid ₹
+                    {paiseToRupees(inv.amountPaid) || '0'} · Balance ₹
+                    {paiseToRupees(inv.balance) || '0'}
+                  </span>
+                  <span
+                    className={cn(
+                      'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize',
+                      inv.status === 'paid'
+                        ? 'bg-green-50 text-green-700'
+                        : inv.status === 'partial'
+                          ? 'bg-blue-50 text-blue-700'
+                          : inv.status === 'waived'
+                            ? 'bg-muted text-muted-foreground'
+                            : 'bg-amber-50 text-amber-700'
+                    )}
+                  >
+                    {inv.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </CardContent>
     </Card>
   )
