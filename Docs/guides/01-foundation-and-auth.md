@@ -147,9 +147,10 @@ Handled in the app (not a trigger). When admin adds an email:
 NEXT_PUBLIC_SUPABASE_URL                  # Client + Server
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY      # Client (safe to expose) — NOT ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY                 # Server only — NEVER in client code
-SMS_GATEWAY_API_KEY                       # Server only (Module 8)
-SMS_GATEWAY_SENDER_ID                     # Server only (Module 8)
-SMS_WEBHOOK_SECRET                        # Server only (Module 8)
+SMS_PROVIDER                              # Server only (Module 8) — unset = mock
+WHATSAPP_PROVIDER                         # Server only (Module 8) — unset = mock
+RESEND_API_KEY  EMAIL_FROM                # Server only — transactional email (invites)
+CRON_SECRET                               # Server only (Module 7) — fee ledger cron bearer
 ```
 
 ---
@@ -189,7 +190,7 @@ SMS_WEBHOOK_SECRET                        # Server only (Module 8)
 
 1. User enters **email or student code** + password. An identifier without `@` is treated as a student
    code and mapped to its synthetic email (`studentLoginEmail()`) before `supabase.auth.signInWithPassword()`
-   — see [Module 4 — Student-Code Login](./04-student-management.md#student-code-login--migration-008)
+   — see [Module 4 — Student-Code Login](./04-student-management.md#student-code-login)
 2. App queries `institution_members WHERE user_id = auth.uid()`
 3. **0 institutions** → redirect to `/no-access`
 4. **1 institution** → store `active_institution_id` + `active_role` in cookie → redirect to `/(dashboard)`
@@ -268,8 +269,8 @@ npx shadcn@latest init
 # 3. Supabase
 npm install @supabase/supabase-js @supabase/ssr
 
-# 4. Apply first migration
-npx supabase db push   # or run SQL in Supabase dashboard
+# 4. Apply migrations (needs DATABASE_URL + psql; or paste SQL in the Supabase dashboard)
+npm run db:rebuild     # bundle supabase/migrations/* and apply the full schema
 
 # 5. Generate types
 npx supabase gen types typescript --project-id <id> > lib/supabase/types.ts

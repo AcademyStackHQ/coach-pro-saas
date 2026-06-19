@@ -1,6 +1,6 @@
 # Module 4 — Student Management
 
-**Status:** `✅ Built` — academy-owned records **plus opt-in per-student login** (migrations `006`, `007`, `008`)
+**Status:** `✅ Built` — academy-owned records **plus opt-in per-student login** (migration `003_students.sql`; code/RPC plumbing in `001_foundation.sql`)
 **Priority:** 4 of 8
 **Back to index:** [docs/README.md](../README.md)
 
@@ -24,9 +24,9 @@
 | **Parent portal** (`parent_user_id` self-service) | Column ships; the portal is later just `SELECT * FROM students WHERE parent_user_id = auth.uid()` |
 | **Batch assignment** (`batch_students`) | Needs the `batches` table from Module 5 |
 
-> **Update (migration `008`):** the original "records-only, 14+ login deferred" stance was **superseded** by a
+> **Update:** the original "records-only, 14+ login deferred" stance was **superseded** by a
 > parent request — every student can now have an **individual login**, built on Supabase Auth via a synthetic
-> email. See [Student-Code Login](#student-code-login--migration-008) below.
+> email (folded into the consolidated `003_students.sql`). See [Student-Code Login](#student-code-login) below.
 
 ---
 
@@ -58,7 +58,7 @@ problem that **under-14 kids have no email** and a parent often enrols multiple 
 | Concept | Where it lives | Email rule |
 |---|---|---|
 | **Login identity** (admin, coach, parent, student-with-login) | `auth.users` → `profiles` | **Unique** — Supabase Auth enforces one account per email |
-| **Student** (the kid being coached) | `students` | **Login is optional & opt-in** (see [Student-Code Login](#student-code-login--migration-008)). `parent_email` stays a shared contact field — it is *never* the login |
+| **Student** (the kid being coached) | `students` | **Login is optional & opt-in** (see [Student-Code Login](#student-code-login)). `parent_email` stays a shared contact field — it is *never* the login |
 
 A parent with two kids = **one** auth account (their email) that owns **two** `students` rows, both
 carrying the same `parent_email`. No collision, because the kids never log in *with that email* — when
@@ -66,7 +66,7 @@ they do get a login, it's keyed on their unique **student code**, not on any ema
 
 ### The two nullable identity links
 
-- **`user_id`** — the student's own login account. **Now used** (migration `008`): set when an admin
+- **`user_id`** — the student's own login account. **Now used**: set when an admin
   enables login for the student. The auth user is created via the service-role admin client with a
   synthetic email — *not* self-signup.
 - **`parent_user_id`** — set when the parent has a login (future parent portal). Still deferred; the
@@ -87,7 +87,7 @@ never a DB constraint.
 
 ---
 
-## Student-Code Login — migration `008`
+## Student-Code Login
 
 Built on Supabase Auth — **no custom auth**. The mechanism:
 
@@ -128,7 +128,7 @@ ledger (invoices, payments) is Module 7.
 **Uniqueness & duplicates** — names/DOB are *not* unique; the student code is:
 - **No** hard `UNIQUE` on `(institution_id, full_name, dob)` — names collide; a hard key would reject
   legitimate students. A non-unique detection index backs the soft prompt.
-- `student_code` is now **auto-generated and mandatory** (migration `008`) — `<institution code><4-digit
+- `student_code` is now **auto-generated and mandatory** — `<institution code><4-digit
   per-institution sequence>`, e.g. `MVA0007`. Keys: the original partial `UNIQUE (institution_id,
   student_code)` **plus** a **global** `UNIQUE (lower(student_code))`. Global uniqueness is what lets the
   login email be derived from the code alone (no academy selector). It is never hand-edited — it's the
@@ -141,7 +141,7 @@ The identifier plumbing lives in `001_foundation.sql`, not here: `institutions.c
 `next_student_code(institution_id)` RPCs (both `SECURITY DEFINER`; `next_student_code` is admin-guarded
 and bumps the counter via `UPDATE … RETURNING`), and the `student_code` branch in `handle_new_user` so
 the academy code is set at admin signup. The auth user for a student login is created from the app via the
-service-role client `lib/admin.ts` — see [Student-Code Login](#student-code-login--migration-008).
+service-role client `lib/admin.ts` — see [Student-Code Login](#student-code-login).
 
 **RLS** (call the `001` helpers — never query `institution_members` inside a policy):
 

@@ -6,12 +6,12 @@
 
 > **Built note (reconciled with the live codebase):** the spec below predates later
 > schema changes. As shipped: keyed by `institution_id` (not `tenant_id`); batch
-> occurrences are computed from `batches.schedule` JSONB (the old `days_of_week` +
-> single `start_time`/`end_time` were dropped in migration 006); and there are **no
+> occurrences are computed from `batches.schedule` JSONB (the consolidated baseline
+> defines `schedule` directly — no legacy `days_of_week` / single `start_time`/`end_time`); and there are **no
 > `/api/*` route handlers** — the calendar is a server component reading `view`/`anchor`
 > from searchParams, with session mutations as server actions in
 > `app/dashboard/calendar/actions.ts`. Views shipped: **Week + Month** (Day deferred).
-> Migration: `supabase/migrations/007_sessions.sql`.
+> Migration: `supabase/migrations/005_sessions.sql` (batches: `004_batches.sql`).
 
 ---
 

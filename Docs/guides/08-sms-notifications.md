@@ -1,6 +1,6 @@
 ﻿# Module 8 — SMS Notifications
 
-**Status:** `🚧 In Progress` (built — apply migration `009_sms.sql`; runs on a dev no-op gateway until `SMS_GATEWAY=msg91`)
+**Status:** `✅ Done` (migration `007_sms.sql`; runs on a `mock` no-op provider until `SMS_PROVIDER` / `WHATSAPP_PROVIDER` is set)
 **Priority:** 8 of 8 — final MVP module
 **Back to index:** [docs/README.md](../README.md)
 
@@ -31,7 +31,7 @@
 >
 > Token resolution is `lib/messaging/tokens.ts#resolveTemplate` (reuses `paiseToRupees`/`monthLabel`/
 > `smsDateLabel`). Credits **decrement per message (floored at 0) but never block** — no top-up
-> flow; a banner shows at ≤ 20. Templates are seeded per institution by a trigger in `009_sms.sql`
+> flow; a banner shows at ≤ 20. Templates are seeded per institution by a trigger in `007_sms.sql`
 > (existing academies backfilled). **Deferred:** the HMAC delivery webhook (columns
 > `gateway_ref`/`delivered_at` reserved), auto payment-confirmation, real providers + WhatsApp
 > template/HSM approval, and a separate WhatsApp number (reuses `parent_mobile`).
@@ -96,26 +96,28 @@ INSERT INTO sms_templates (tenant_id, name, body) VALUES
 
 ---
 
-## SMS Gateway Adapter
+## Messaging Adapter (as built)
 
-**File:** `lib/sms/index.ts`
+**Directory:** `lib/messaging/` (the original spec sketched a single `lib/sms/index.ts`).
 
-Pluggable via `SMS_GATEWAY` env var (default: `msg91`).
+Channel-aware (SMS + WhatsApp) and provider-pluggable. Each channel resolves its
+provider from env, defaulting to a `mock` no-op that logs and sends nothing:
 
 ```ts
-interface SMSGateway {
-  send(mobile: string, message: string): Promise<{ ref: string }>
+// lib/messaging/index.ts
+//   SMS_PROVIDER=msg91     → real SMS via that provider
+//   WHATSAPP_PROVIDER=meta → real WhatsApp via that provider
+//   (unset)                → mock (default — logs [msg:mock:<channel>], no real send)
+
+export interface MessageProvider {
+  send(channel: Channel, to: string, body: string): Promise<MessageResult>
 }
-
-// lib/sms/msg91.ts    — production
-// lib/sms/noop.ts     — dev/test (logs to console, returns fake ref)
 ```
 
-Switch adapter in `lib/sms/index.ts`:
-```ts
-const gateway = process.env.SMS_GATEWAY === 'msg91' ? msg91 : noop
-export default gateway
-```
+Wiring a real vendor (MSG91 / Meta / Twilio) is one registry entry in
+`lib/messaging/index.ts#providerFor` — no call-site change. A student's
+`contact_channel` (`sms` | `whatsapp` | `both`) drives which channels each message
+goes out on (`channelsFor`).
 
 ---
 

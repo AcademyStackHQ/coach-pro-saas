@@ -7,11 +7,15 @@ This folder holds the SQL schema for the CoachPro database, applied in
 
 | File | Contains |
 |------|----------|
-| `001_foundation.sql` | `institutions`, `profiles`, `institution_members`, `institution_allowed_emails`; helper functions; public RPCs; RLS; the `handle_new_user` trigger; `link_user_to_institution` |
+| `001_foundation.sql` | `institutions`, `profiles`, `institution_members`, `institution_allowed_emails`; helper functions; public RPCs (incl. institution-code / student-code); RLS; the `handle_new_user` trigger; `link_user_to_institution` |
 | `002_coaches.sql` | `coaches` table, `is_coach_of`, RLS |
-| `003_students.sql` | `students` table (incl. fees + `parent_*` columns), indexes, RLS |
+| `003_students.sql` | `students` table (incl. fees, `parent_*`, and student-code login columns), indexes, RLS |
+| `004_batches.sql` | `batches` + enrolment, `schedule` JSONB, `is_*` helpers, RLS |
+| `005_sessions.sql` | 1-to-1 `sessions` (calendar), RLS |
+| `006_fees.sql` | `fee_ledger` + `fee_payments` (paise), `next_receipt_number`, RLS |
+| `007_sms.sql` | `sms_logs` (+ `channel`), per-institution message templates + seed trigger, RLS |
 
-These three files are the **baseline (`v0`)** — a consolidated, clean
+These files are the **baseline (`v0`)** — a consolidated, clean
 snapshot of the whole schema. Each object is defined exactly once, in its
 final state. There are no `CREATE OR REPLACE` chains to replay.
 
@@ -19,16 +23,17 @@ final state. There are no `CREATE OR REPLACE` chains to replay.
 
 **While in development (no production data):** it's fine to keep editing the
 baseline files and recreate the database from scratch. To recreate, drop the
-`public` schema and run `001` → `002` → `003` in order.
+`public` schema and run `001` → … → `007` in order (or just `npm run db:fresh`,
+which bundles `supabase/rebuild_all.sql` and replays it after a reset).
 
 **Once there is production data, the baseline freezes.** You can't drop &
 recreate a live database, so from that point on:
 
-- ❌ **Never edit `001`–`003`** (or any already-applied file). Editing an
+- ❌ **Never edit `001`–`007`** (or any already-applied file). Editing an
   applied migration does nothing to environments that already ran it, and
   silently diverges new environments from old ones.
-- ✅ **Add new, forward-only migrations** starting at `004`, e.g.
-  `004_add_attendance.sql`. Each new file is additive and idempotent where
+- ✅ **Add new, forward-only migrations** starting at `008`, e.g.
+  `008_add_attendance.sql`. Each new file is additive and idempotent where
   practical (`ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`).
 - ✅ To change an existing object, write a new migration that `ALTER`s it
   (or `CREATE OR REPLACE`s the function) — don't mutate the original file.

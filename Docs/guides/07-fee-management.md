@@ -1,6 +1,6 @@
 ﻿# Module 7 — Fee Management
 
-**Status:** `🚧 In Progress` (built — apply migration `008_fees.sql` + set `CRON_SECRET` to go live)
+**Status:** `✅ Done` (migration `006_fees.sql`; set `CRON_SECRET` to enable the cron endpoint)
 **Priority:** 7 of 8
 **Back to index:** [docs/README.md](../README.md)
 
